@@ -16,7 +16,17 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { listPosts, saveDraft, deletePost, updateMetrics } from "@/lib/posts.functions";
 import { publishLinkedInPost } from "@/lib/linkedin.functions";
+import { generateLinkedInPost } from "@/lib/ai-writer.functions";
 import type { Tables } from "@/integrations/supabase/types";
+
+const TONES = ["Professional", "Educational", "Casual", "Academic"] as const;
+type Tone = (typeof TONES)[number];
+const toneHint: Record<Tone, string> = {
+  Professional: "great for recruiters",
+  Educational: "teaching a concept",
+  Casual: "friendly & conversational",
+  Academic: "scholarly",
+};
 
 type Post = Tables<"posts">;
 
