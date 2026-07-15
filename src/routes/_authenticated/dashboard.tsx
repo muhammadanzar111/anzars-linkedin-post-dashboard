@@ -156,8 +156,10 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-3">
-      <section className="md:col-span-2">
+    <div className="grid gap-6 lg:grid-cols-5">
+      <AiWriterSidebar onUseText={(t) => { setText(t); setFlash({ kind: "ok", message: "AI draft moved to composer." }); }} />
+
+      <section className="lg:col-span-3">
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-medium">{draftId ? "Editing draft" : "New draft"}</h2>
@@ -231,10 +233,8 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             </div>
           </div>
         </div>
-      </section>
 
-      <aside>
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-medium">Drafts</h2>
             <span className="text-xs text-muted-foreground">{drafts.length}</span>
@@ -242,7 +242,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
           {drafts.length === 0 ? (
             <p className="text-xs text-muted-foreground">No drafts yet.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="grid gap-2 sm:grid-cols-2">
               {drafts.map((d) => (
                 <li key={d.id}>
                   <button
@@ -261,8 +261,95 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             </ul>
           )}
         </div>
-      </aside>
+      </section>
     </div>
+  );
+}
+
+// ---------- AI Writer Sidebar ----------
+function AiWriterSidebar({ onUseText }: { onUseText: (text: string) => void }) {
+  const [details, setDetails] = useState("");
+  const [tone, setTone] = useState<Tone>("Professional");
+  const [generated, setGenerated] = useState<string>("");
+
+  const gen = useServerFn(generateLinkedInPost);
+  const genMutation = useMutation({
+    mutationFn: (vars: { details: string; tone: Tone }) => gen({ data: vars }),
+    onSuccess: (res) => setGenerated(res.text),
+  });
+
+  const canGen = details.trim().length > 0 && !genMutation.isPending;
+
+  return (
+    <aside className="lg:col-span-2">
+      <div className="sticky top-6 rounded-xl border border-border bg-gradient-to-b from-card to-card/60 p-5 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold tracking-tight">AI Post Generator ✨</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Turn raw notes into a scroll-stopping LinkedIn post.
+          </p>
+        </div>
+
+        <label className="mb-1 block text-xs font-medium">Enter your post details</label>
+        <textarea
+          value={details}
+          onChange={(e) => setDetails(e.target.value)}
+          rows={6}
+          placeholder="e.g., I just finished an unemployment data analysis project using Python. We used linear regression to predict trends..."
+          className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+        />
+
+        <label className="mb-1 mt-4 block text-xs font-medium">Select Tone</label>
+        <select
+          value={tone}
+          onChange={(e) => setTone(e.target.value as Tone)}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+        >
+          {TONES.map((t) => (
+            <option key={t} value={t}>
+              {t} ({toneHint[t]})
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={() => genMutation.mutate({ details: details.trim(), tone })}
+          disabled={!canGen}
+          className="mt-4 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {genMutation.isPending ? "Generating…" : "Generate Post 🚀"}
+        </button>
+
+        {genMutation.error && (
+          <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+            {genMutation.error instanceof Error ? genMutation.error.message : "Generation failed"}
+          </p>
+        )}
+
+        {generated && (
+          <div className="mt-5">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-xs font-medium text-muted-foreground">AI Preview</h3>
+              <button
+                onClick={() => setGenerated("")}
+                className="text-[10px] text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="max-h-80 overflow-y-auto rounded-lg border border-border bg-background p-3 text-sm leading-relaxed whitespace-pre-wrap">
+              {generated}
+            </div>
+            <button
+              onClick={() => onUseText(generated)}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              Move to Composer ➜
+            </button>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }
 
