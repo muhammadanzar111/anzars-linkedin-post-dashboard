@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/linkedin";
 
@@ -14,20 +15,17 @@ function authHeaders() {
 }
 
 export const publishLinkedInPost = createServerFn({ method: "POST" })
-  .inputValidator((data: { text: string }) => {
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { text: string; draftId?: string }) => {
     const text = (data?.text ?? "").trim();
     if (!text) throw new Error("Post text cannot be empty");
     if (text.length > 3000) throw new Error("Post exceeds LinkedIn's 3000 character limit");
-    return { text };
+    return { text, draftId: data?.draftId };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const headers = authHeaders();
 
-    // Get the member URN from userinfo (OIDC 'sub' is the member id)
-    const userinfoRes = await fetch(`${GATEWAY_URL}/v2/userinfo`, {
-      method: "GET",
-      headers,
-    });
+    const userinfoRes = await fetch(`${GATEWAY_URL}/v2/userinfo`, { method: "GET", headers });
     if (!userinfoRes.ok) {
       const body = await userinfoRes.text();
       console.error(`LinkedIn userinfo failed [${userinfoRes.status}]: ${body}`);
@@ -46,9 +44,7 @@ export const publishLinkedInPost = createServerFn({ method: "POST" })
           shareMediaCategory: "NONE",
         },
       },
-      visibility: {
-        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-      },
+      visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" },
     };
 
     const postRes = await fetch(`${GATEWAY_URL}/v2/ugcPosts`, {
@@ -67,6 +63,36 @@ export const publishLinkedInPost = createServerFn({ method: "POST" })
       throw new Error(`LinkedIn publish failed [${postRes.status}]: ${body}`);
     }
 
-    const postId = postRes.headers.get("x-restli-id") ?? undefined;
-    return { ok: true as const, postId, authorName: userinfo.name };
+    const postId = postRes.headers.get("x-restli-id") ?? null;
+    const publishedAt = new Date().toISOString();
+
+    // Persist to local history. If a draft id was supplied, promote it; otherwise insert new.
+    if (data.draftId) {
+      const { data: row, error } = await context.supabase
+        .from("posts")
+        .update({
+          content: data.text,
+          status: "published",
+          linkedin_post_id: postId,
+          published_at: publishedAt,
+        })
+        .eq("id", data.draftId)
+        .select()
+        .maybeSingle();
+      if (error) console.error("Persist published post (update) failed:", error.message);
+      return { ok: true as const, postId, row };
+    }
+    const { data: row, error } = await context.supabase
+      .from("posts")
+      .insert({
+        user_id: context.userId,
+        content: data.text,
+        status: "published",
+        linkedin_post_id: postId,
+        published_at: publishedAt,
+      })
+      .select()
+      .maybeSingle();
+    if (error) console.error("Persist published post (insert) failed:", error.message);
+    return { ok: true as const, postId, row };
   });
