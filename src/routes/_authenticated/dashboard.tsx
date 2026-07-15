@@ -18,6 +18,7 @@ import { listPosts, saveDraft, deletePost, updateMetrics } from "@/lib/posts.fun
 import { publishLinkedInPost } from "@/lib/linkedin.functions";
 import { generateLinkedInPost } from "@/lib/ai-writer.functions";
 import type { Tables } from "@/integrations/supabase/types";
+import { AnimatedBackground, BgThemePicker, useBgTheme } from "@/components/AnimatedBackground";
 
 const TONES = ["Professional", "Educational", "Casual", "Academic"] as const;
 type Tone = (typeof TONES)[number];
