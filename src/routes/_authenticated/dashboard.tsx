@@ -18,6 +18,7 @@ import { listPosts, saveDraft, deletePost, updateMetrics } from "@/lib/posts.fun
 import { publishLinkedInPost } from "@/lib/linkedin.functions";
 import { generateLinkedInPost } from "@/lib/ai-writer.functions";
 import type { Tables } from "@/integrations/supabase/types";
+import { AnimatedBackground, BgThemePicker, useBgTheme } from "@/components/AnimatedBackground";
 
 const TONES = ["Professional", "Educational", "Casual", "Academic"] as const;
 type Tone = (typeof TONES)[number];
@@ -60,26 +61,33 @@ type Tab = "compose" | "history" | "analytics";
 function Dashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("compose");
+  const [bgTheme, setBgTheme] = useBgTheme();
 
   async function onSignOut() {
     await supabase.auth.signOut();
     navigate({ to: "/auth" });
   }
 
+  const isDark = bgTheme !== "plain" && bgTheme !== "mesh";
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card">
+    <div className={`relative min-h-screen text-foreground ${bgTheme === "plain" ? "bg-background" : ""} ${isDark ? "text-white" : ""}`}>
+      <AnimatedBackground theme={bgTheme} />
+      <header className={`border-b ${bgTheme === "plain" ? "border-border bg-card" : "border-white/10 bg-black/20 backdrop-blur-xl"}`}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
             <h1 className="text-lg font-semibold tracking-tight">LinkedIn Post Studio</h1>
-            <p className="text-xs text-muted-foreground">Draft • Publish • Track</p>
+            <p className={`text-xs ${bgTheme === "plain" ? "text-muted-foreground" : "text-white/60"}`}>Draft • Publish • Track</p>
           </div>
-          <button
-            onClick={onSignOut}
-            className="rounded-md border border-input px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-3">
+            <BgThemePicker theme={bgTheme} onChange={setBgTheme} />
+            <button
+              onClick={onSignOut}
+              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${bgTheme === "plain" ? "border-input hover:bg-accent" : "border-white/20 hover:bg-white/10"}`}
+            >
+              Sign out
+            </button>
+          </div>
         </div>
         <nav className="mx-auto flex max-w-6xl gap-1 px-6">
           {(["compose", "history", "analytics"] as const).map((t) => (
