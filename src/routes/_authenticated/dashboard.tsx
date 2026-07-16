@@ -19,6 +19,8 @@ import { publishLinkedInPost } from "@/lib/linkedin.functions";
 import { generateLinkedInPost } from "@/lib/ai-writer.functions";
 import type { Tables } from "@/integrations/supabase/types";
 import { AnimatedBackground, BgThemePicker, useBgTheme } from "@/components/AnimatedBackground";
+import { BestTimeToPostModal } from "@/components/BestTimeToPostModal";
+import { Clock } from "lucide-react";
 
 const TONES = ["Professional", "Educational", "Casual", "Academic"] as const;
 type Tone = (typeof TONES)[number];
@@ -68,22 +70,22 @@ function Dashboard() {
     navigate({ to: "/auth" });
   }
 
-  const isDark = bgTheme !== "plain" && bgTheme !== "mesh";
+  const isDark = bgTheme === "aurora" || bgTheme === "grid" || bgTheme === "sunset";
 
   return (
-    <div className={`relative min-h-screen text-foreground ${bgTheme === "plain" ? "bg-background" : ""} ${isDark ? "text-white" : ""}`}>
+    <div className={`${isDark ? "dark" : ""} relative min-h-screen text-foreground ${bgTheme === "plain" ? "bg-background" : ""}`}>
       <AnimatedBackground theme={bgTheme} />
-      <header className={`border-b ${bgTheme === "plain" ? "border-border bg-card" : "border-white/10 bg-black/20 backdrop-blur-xl"}`}>
+      <header className="border-b border-border/60 bg-card/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
-            <h1 className="text-lg font-semibold tracking-tight">LinkedIn Post Studio</h1>
-            <p className={`text-xs ${bgTheme === "plain" ? "text-muted-foreground" : "text-white/60"}`}>Draft • Publish • Track</p>
+            <h1 className="text-lg font-semibold tracking-tight text-foreground">LinkedIn Post Studio</h1>
+            <p className="text-xs text-muted-foreground">Draft • Publish • Track</p>
           </div>
           <div className="flex items-center gap-3">
             <BgThemePicker theme={bgTheme} onChange={setBgTheme} />
             <button
               onClick={onSignOut}
-              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${bgTheme === "plain" ? "border-input hover:bg-accent" : "border-white/20 hover:bg-white/10"}`}
+              className="rounded-md border border-input bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
             >
               Sign out
             </button>
@@ -105,6 +107,7 @@ function Dashboard() {
           ))}
         </nav>
       </header>
+
 
       <main className="mx-auto max-w-6xl px-6 py-8">
         {tab === "compose" && <ComposeTab onGoHistory={() => setTab("history")} />}
@@ -279,6 +282,7 @@ function AiWriterSidebar({ onUseText }: { onUseText: (text: string) => void }) {
   const [details, setDetails] = useState("");
   const [tone, setTone] = useState<Tone>("Professional");
   const [generated, setGenerated] = useState<string>("");
+  const [timeModalOpen, setTimeModalOpen] = useState(false);
 
   const gen = useServerFn(generateLinkedInPost);
   const genMutation = useMutation({
@@ -320,13 +324,26 @@ function AiWriterSidebar({ onUseText }: { onUseText: (text: string) => void }) {
           ))}
         </select>
 
-        <button
-          onClick={() => genMutation.mutate({ details: details.trim(), tone })}
-          disabled={!canGen}
-          className="mt-4 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {genMutation.isPending ? "Generating…" : "Generate Post 🚀"}
-        </button>
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => genMutation.mutate({ details: details.trim(), tone })}
+            disabled={!canGen}
+            className="inline-flex flex-1 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {genMutation.isPending ? "Generating…" : "Generate Post 🚀"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTimeModalOpen(true)}
+            title="Best Time to Post"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-input bg-background/60 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Best Time</span>
+          </button>
+        </div>
+
+        <BestTimeToPostModal open={timeModalOpen} onClose={() => setTimeModalOpen(false)} />
 
         {genMutation.error && (
           <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
