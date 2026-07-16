@@ -282,6 +282,7 @@ function AiWriterSidebar({ onUseText }: { onUseText: (text: string) => void }) {
   const [details, setDetails] = useState("");
   const [tone, setTone] = useState<Tone>("Professional");
   const [generated, setGenerated] = useState<string>("");
+  const [timeModalOpen, setTimeModalOpen] = useState(false);
 
   const gen = useServerFn(generateLinkedInPost);
   const genMutation = useMutation({
