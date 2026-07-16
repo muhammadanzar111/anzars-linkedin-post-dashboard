@@ -324,13 +324,26 @@ function AiWriterSidebar({ onUseText }: { onUseText: (text: string) => void }) {
           ))}
         </select>
 
-        <button
-          onClick={() => genMutation.mutate({ details: details.trim(), tone })}
-          disabled={!canGen}
-          className="mt-4 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {genMutation.isPending ? "Generating…" : "Generate Post 🚀"}
-        </button>
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => genMutation.mutate({ details: details.trim(), tone })}
+            disabled={!canGen}
+            className="inline-flex flex-1 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {genMutation.isPending ? "Generating…" : "Generate Post 🚀"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTimeModalOpen(true)}
+            title="Best Time to Post"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-input bg-background/60 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Best Time</span>
+          </button>
+        </div>
+
+        <BestTimeToPostModal open={timeModalOpen} onClose={() => setTimeModalOpen(false)} />
 
         {genMutation.error && (
           <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
