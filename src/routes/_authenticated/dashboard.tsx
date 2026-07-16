@@ -127,6 +127,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   const [draftId, setDraftId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [flash, setFlash] = useState<{ kind: "ok" | "err"; message: string } | null>(null);
+  const [timeModalOpen, setTimeModalOpen] = useState(false);
 
   const save = useServerFn(saveDraft);
   const publish = useServerFn(publishLinkedInPost);
@@ -167,113 +168,120 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-5">
-      <AiWriterSidebar onUseText={(t) => { setText(t); setFlash({ kind: "ok", message: "AI draft moved to composer." }); }} />
+    <>
+      <div className="grid gap-6 lg:grid-cols-5">
+        <AiWriterSidebar
+          onUseText={(t) => { setText(t); setFlash({ kind: "ok", message: "AI draft moved to composer." }); }}
+          onOpenTimeModal={() => setTimeModalOpen(true)}
+        />
 
-      <section className="lg:col-span-3">
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium">{draftId ? "Editing draft" : "New draft"}</h2>
-            <span
-              className={`text-xs ${trimmed.length > MAX ? "text-destructive" : "text-muted-foreground"}`}
-            >
-              {trimmed.length}/{MAX}
-            </span>
-          </div>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="What do you want to share?"
-            rows={12}
-            className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => publishMutation.mutate({ text: trimmed, draftId: draftId ?? undefined })}
-              disabled={!canPublish}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {publishMutation.isPending ? "Publishing…" : "Publish to LinkedIn"}
-            </button>
-            <button
-              onClick={() => saveMutation.mutate({ id: draftId ?? undefined, content: text })}
-              disabled={!trimmed || saveMutation.isPending}
-              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-50"
-            >
-              {saveMutation.isPending ? "Saving…" : draftId ? "Update draft" : "Save draft"}
-            </button>
-            <button
-              onClick={newDraft}
-              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
-            >
-              New
-            </button>
-            <button
-              onClick={onGoHistory}
-              className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:underline"
-            >
-              View history →
-            </button>
-          </div>
-
-          {flash && (
-            <div
-              className={`mt-4 rounded-md border p-3 text-sm ${
-                flash.kind === "ok"
-                  ? "border-border bg-secondary"
-                  : "border-destructive/40 bg-destructive/10 text-destructive"
-              }`}
-            >
-              {flash.message}
+        <section className="lg:col-span-3">
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-medium">{draftId ? "Editing draft" : "New draft"}</h2>
+              <span
+                className={`text-xs ${trimmed.length > MAX ? "text-destructive" : "text-muted-foreground"}`}
+              >
+                {trimmed.length}/{MAX}
+              </span>
             </div>
-          )}
-        </div>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="What do you want to share?"
+              rows={12}
+              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => publishMutation.mutate({ text: trimmed, draftId: draftId ?? undefined })}
+                disabled={!canPublish}
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {publishMutation.isPending ? "Publishing…" : "Publish to LinkedIn"}
+              </button>
+              <button
+                onClick={() => saveMutation.mutate({ id: draftId ?? undefined, content: text })}
+                disabled={!trimmed || saveMutation.isPending}
+                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-50"
+              >
+                {saveMutation.isPending ? "Saving…" : draftId ? "Update draft" : "Save draft"}
+              </button>
+              <button
+                onClick={newDraft}
+                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+              >
+                New
+              </button>
+              <button
+                onClick={onGoHistory}
+                className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:underline"
+              >
+                View history →
+              </button>
+            </div>
 
-        <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-medium">Preview</h2>
-          <div className="rounded-lg border border-border bg-background p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-muted" />
-              <div>
-                <div className="text-sm font-semibold">You</div>
-                <div className="text-xs text-muted-foreground">Just now · 🌐</div>
+            {flash && (
+              <div
+                className={`mt-4 rounded-md border p-3 text-sm ${
+                  flash.kind === "ok"
+                    ? "border-border bg-secondary"
+                    : "border-destructive/40 bg-destructive/10 text-destructive"
+                }`}
+              >
+                {flash.message}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
+            <h2 className="mb-3 text-sm font-medium">Preview</h2>
+            <div className="rounded-lg border border-border bg-background p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-muted" />
+                <div>
+                  <div className="text-sm font-semibold">You</div>
+                  <div className="text-xs text-muted-foreground">Just now · 🌐</div>
+                </div>
+              </div>
+              <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
+                {trimmed ? trimmed : <span className="text-muted-foreground">Your post will appear here…</span>}
               </div>
             </div>
-            <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
-              {trimmed ? trimmed : <span className="text-muted-foreground">Your post will appear here…</span>}
-            </div>
           </div>
-        </div>
 
-        <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium">Drafts</h2>
-            <span className="text-xs text-muted-foreground">{drafts.length}</span>
+          <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-medium">Drafts</h2>
+              <span className="text-xs text-muted-foreground">{drafts.length}</span>
+            </div>
+            {drafts.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No drafts yet.</p>
+            ) : (
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {drafts.map((d) => (
+                  <li key={d.id}>
+                    <button
+                      onClick={() => loadDraft(d)}
+                      className={`w-full rounded-md border p-2 text-left text-xs transition-colors ${
+                        draftId === d.id ? "border-primary bg-accent" : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <div className="line-clamp-2 text-foreground">{d.content || "(empty)"}</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">
+                        {new Date(d.updated_at).toLocaleString()}
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          {drafts.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No drafts yet.</p>
-          ) : (
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {drafts.map((d) => (
-                <li key={d.id}>
-                  <button
-                    onClick={() => loadDraft(d)}
-                    className={`w-full rounded-md border p-2 text-left text-xs transition-colors ${
-                      draftId === d.id ? "border-primary bg-accent" : "border-border hover:bg-accent"
-                    }`}
-                  >
-                    <div className="line-clamp-2 text-foreground">{d.content || "(empty)"}</div>
-                    <div className="mt-1 text-[10px] text-muted-foreground">
-                      {new Date(d.updated_at).toLocaleString()}
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+
+      <BestTimeToPostModal open={timeModalOpen} onClose={() => setTimeModalOpen(false)} />
+    </>
   );
 }
 
