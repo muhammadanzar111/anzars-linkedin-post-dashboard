@@ -286,11 +286,16 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
 }
 
 // ---------- AI Writer Sidebar ----------
-function AiWriterSidebar({ onUseText }: { onUseText: (text: string) => void }) {
+function AiWriterSidebar({
+  onUseText,
+  onOpenTimeModal,
+}: {
+  onUseText: (text: string) => void;
+  onOpenTimeModal: () => void;
+}) {
   const [details, setDetails] = useState("");
   const [tone, setTone] = useState<Tone>("Professional");
   const [generated, setGenerated] = useState<string>("");
-  const [timeModalOpen, setTimeModalOpen] = useState(false);
 
   const gen = useServerFn(generateLinkedInPost);
   const genMutation = useMutation({
@@ -342,7 +347,7 @@ function AiWriterSidebar({ onUseText }: { onUseText: (text: string) => void }) {
           </button>
           <button
             type="button"
-            onClick={() => setTimeModalOpen(true)}
+            onClick={onOpenTimeModal}
             title="Best Time to Post"
             className="inline-flex items-center justify-center gap-1.5 rounded-md border border-input bg-background/60 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
@@ -350,8 +355,6 @@ function AiWriterSidebar({ onUseText }: { onUseText: (text: string) => void }) {
             <span className="hidden sm:inline">Best Time</span>
           </button>
         </div>
-
-        <BestTimeToPostModal open={timeModalOpen} onClose={() => setTimeModalOpen(false)} />
 
         {genMutation.error && (
           <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
