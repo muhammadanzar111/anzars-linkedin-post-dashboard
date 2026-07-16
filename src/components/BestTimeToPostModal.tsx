@@ -141,14 +141,14 @@ export function BestTimeToPostModal({
       role="dialog"
       aria-modal="true"
       aria-label="Best Time to Post"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
     >
       <button
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 z-0 bg-black/60 backdrop-blur-md"
       />
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border/60 bg-card/80 text-card-foreground shadow-2xl backdrop-blur-2xl">
+      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border/60 bg-card text-card-foreground shadow-2xl backdrop-blur-2xl">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
         <div className="relative flex items-start justify-between border-b border-border/60 px-6 py-4">
           <div className="flex items-center gap-2">
@@ -169,10 +169,10 @@ export function BestTimeToPostModal({
           </button>
         </div>
 
-        <div className="relative space-y-4 px-6 py-5">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">Country</label>
+        <div className="relative space-y-5 px-6 py-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Country</label>
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
@@ -185,8 +185,8 @@ export function BestTimeToPostModal({
                 ))}
               </select>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">Time Zone</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Time Zone</label>
               <select
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
