@@ -250,7 +250,27 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             </div>
           </div>
 
+          <div className="mt-6">
+            <ViralScoreCard text={text} />
+          </div>
+
+          <div className="mt-6">
+            <HashtagOptimizer
+              text={text}
+              onInsert={(tags) => {
+                setText((prev) => {
+                  const base = prev.replace(/\s+$/, "");
+                  // Remove any trailing hashtag-only line to avoid duplicates
+                  const withoutTrailingTags = base.replace(/\n[ \t]*(#[\w]+(\s+#[\w]+)*)\s*$/, "");
+                  return `${withoutTrailingTags}\n\n${tags}`;
+                });
+                setFlash({ kind: "ok", message: "Hashtags inserted into your post." });
+              }}
+            />
+          </div>
+
           <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
+
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-medium">Drafts</h2>
               <span className="text-xs text-muted-foreground">{drafts.length}</span>
