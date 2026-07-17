@@ -20,16 +20,16 @@ import { generateLinkedInPost } from "@/lib/ai-writer.functions";
 import type { Tables } from "@/integrations/supabase/types";
 import { AnimatedBackground, BgThemePicker, useBgTheme } from "@/components/AnimatedBackground";
 import { BestTimeToPostModal } from "@/components/BestTimeToPostModal";
+import { ViralScoreCard, HashtagOptimizer } from "@/components/ViralInsights";
 import { Clock } from "lucide-react";
 
-const TONES = ["Professional", "Educational", "Casual", "Academic"] as const;
-type Tone = (typeof TONES)[number];
-const toneHint: Record<Tone, string> = {
-  Professional: "great for recruiters",
-  Educational: "teaching a concept",
-  Casual: "friendly & conversational",
-  Academic: "scholarly",
-};
+const TONE_STEPS = [
+  "Highly Casual",
+  "Casual",
+  "Balanced",
+  "Professional",
+  "Corporate",
+] as const;
 
 type Post = Tables<"posts">;
 
