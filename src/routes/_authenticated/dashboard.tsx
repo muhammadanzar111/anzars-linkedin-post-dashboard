@@ -294,12 +294,12 @@ function AiWriterSidebar({
   onOpenTimeModal: () => void;
 }) {
   const [details, setDetails] = useState("");
-  const [tone, setTone] = useState<Tone>("Professional");
+  const [toneLevel, setToneLevel] = useState<number>(2);
   const [generated, setGenerated] = useState<string>("");
 
   const gen = useServerFn(generateLinkedInPost);
   const genMutation = useMutation({
-    mutationFn: (vars: { details: string; tone: Tone }) => gen({ data: vars }),
+    mutationFn: (vars: { details: string; toneLevel: number }) => gen({ data: vars }),
     onSuccess: (res) => setGenerated(res.text),
   });
 
@@ -315,6 +315,35 @@ function AiWriterSidebar({
           </p>
         </div>
 
+        <div className="mb-4 rounded-lg border border-border bg-background/60 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-xs font-medium">Tone Adjustment</label>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+              {TONE_STEPS[toneLevel]}
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={4}
+            step={1}
+            value={toneLevel}
+            onChange={(e) => setToneLevel(Number(e.target.value))}
+            list="tone-ticks"
+            className="w-full accent-primary"
+          />
+          <datalist id="tone-ticks">
+            {TONE_STEPS.map((_, i) => (
+              <option key={i} value={i} />
+            ))}
+          </datalist>
+          <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+            <span>Casual</span>
+            <span>Balanced</span>
+            <span>Corporate</span>
+          </div>
+        </div>
+
         <label className="mb-1 block text-xs font-medium">Enter your post details</label>
         <textarea
           value={details}
@@ -324,22 +353,9 @@ function AiWriterSidebar({
           className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
         />
 
-        <label className="mb-1 mt-4 block text-xs font-medium">Select Tone</label>
-        <select
-          value={tone}
-          onChange={(e) => setTone(e.target.value as Tone)}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-        >
-          {TONES.map((t) => (
-            <option key={t} value={t}>
-              {t} ({toneHint[t]})
-            </option>
-          ))}
-        </select>
-
         <div className="mt-4 flex gap-2">
           <button
-            onClick={() => genMutation.mutate({ details: details.trim(), tone })}
+            onClick={() => genMutation.mutate({ details: details.trim(), toneLevel })}
             disabled={!canGen}
             className="inline-flex flex-1 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -355,6 +371,7 @@ function AiWriterSidebar({
             <span className="hidden sm:inline">Best Time</span>
           </button>
         </div>
+
 
         {genMutation.error && (
           <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
