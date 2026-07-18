@@ -288,17 +288,37 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
 
           <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
             <h2 className="mb-3 text-sm font-medium">Preview</h2>
-            <div className="rounded-lg border border-border bg-background p-4">
+            <div className={`rounded-lg border border-border p-4 ${bgTemplate.className} ${bgTemplate.textClass}`}>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-muted" />
+                <div className="h-10 w-10 rounded-full bg-white/20" />
                 <div>
                   <div className="text-sm font-semibold">You</div>
-                  <div className="text-xs text-muted-foreground">Just now · 🌐</div>
+                  <div className="text-xs opacity-80">Just now · 🌐</div>
                 </div>
               </div>
               <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
-                {trimmed ? trimmed : <span className="text-muted-foreground">Your post will appear here…</span>}
+                {trimmed ? trimmed : <span className="opacity-70">Your post will appear here…</span>}
               </div>
+              {media.length > 0 && (
+                <div className={`mt-3 grid gap-2 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                  {media.map((m) =>
+                    m.kind === "image" ? (
+                      <img key={m.id} src={m.url} alt={m.name} className="max-h-64 w-full rounded-md object-cover" />
+                    ) : (
+                      <video key={m.id} src={m.url} controls className="max-h-64 w-full rounded-md object-cover" />
+                    ),
+                  )}
+                </div>
+              )}
+              {docs.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  {docs.map((d) => (
+                    <div key={d.id} className="rounded-md bg-black/10 px-3 py-2 text-xs">
+                      📄 {d.name} <span className="opacity-70">· {d.sizeKb} KB</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
