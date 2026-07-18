@@ -28,7 +28,7 @@ import {
   type MediaAttachment,
   type DocAttachment,
 } from "@/components/PostToolbar";
-import { useRef } from "react";
+
 import { Clock } from "lucide-react";
 
 const TONE_STEPS = [
