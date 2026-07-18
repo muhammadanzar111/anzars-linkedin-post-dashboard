@@ -136,6 +136,29 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   const [text, setText] = useState("");
   const [flash, setFlash] = useState<{ kind: "ok" | "err"; message: string } | null>(null);
   const [timeModalOpen, setTimeModalOpen] = useState(false);
+  const [media, setMedia] = useState<MediaAttachment[]>([]);
+  const [docs, setDocs] = useState<DocAttachment[]>([]);
+  const [bgId, setBgId] = useState<string>("none");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const bgTemplate = BG_TEMPLATES.find((t) => t.id === bgId) ?? BG_TEMPLATES[0];
+
+  function insertAtCursor(snippet: string) {
+    const ta = textareaRef.current;
+    if (!ta) {
+      setText((prev) => prev + snippet);
+      return;
+    }
+    const start = ta.selectionStart ?? text.length;
+    const end = ta.selectionEnd ?? text.length;
+    const next = text.slice(0, start) + snippet + text.slice(end);
+    setText(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      const pos = start + snippet.length;
+      ta.setSelectionRange(pos, pos);
+    });
+  }
 
   const save = useServerFn(saveDraft);
   const publish = useServerFn(publishLinkedInPost);
