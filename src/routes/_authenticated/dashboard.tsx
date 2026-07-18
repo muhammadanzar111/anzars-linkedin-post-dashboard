@@ -21,6 +21,14 @@ import type { Tables } from "@/integrations/supabase/types";
 import { AnimatedBackground, BgThemePicker, useBgTheme } from "@/components/AnimatedBackground";
 import { BestTimeToPostModal } from "@/components/BestTimeToPostModal";
 import { ViralScoreCard, HashtagOptimizer } from "@/components/ViralInsights";
+import {
+  PostToolbar,
+  AttachmentStrip,
+  BG_TEMPLATES,
+  type MediaAttachment,
+  type DocAttachment,
+} from "@/components/PostToolbar";
+import { useRef } from "react";
 import { Clock } from "lucide-react";
 
 const TONE_STEPS = [
