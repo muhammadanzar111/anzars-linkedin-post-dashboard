@@ -216,13 +216,34 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
                 {trimmed.length}/{MAX}
               </span>
             </div>
+            <div className="mb-2">
+              <PostToolbar
+                insertText={insertAtCursor}
+                onAddMedia={(m) => setMedia((prev) => [...prev, m])}
+                onAddDoc={(d) => setDocs((prev) => [...prev, d])}
+                bgId={bgId}
+                onChangeBg={setBgId}
+              />
+            </div>
             <textarea
+              ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="What do you want to share?"
               rows={12}
               className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
+            <AttachmentStrip
+              media={media}
+              docs={docs}
+              onRemoveMedia={(id) => setMedia((prev) => prev.filter((m) => m.id !== id))}
+              onRemoveDoc={(id) => setDocs((prev) => prev.filter((d) => d.id !== id))}
+            />
+            {(media.length > 0 || docs.length > 0) && (
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                Note: LinkedIn's write-only API publishes plain text. Attachments show here and in the preview only.
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => publishMutation.mutate({ text: trimmed, draftId: draftId ?? undefined })}
