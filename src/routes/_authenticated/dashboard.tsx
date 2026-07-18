@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -21,6 +21,14 @@ import type { Tables } from "@/integrations/supabase/types";
 import { AnimatedBackground, BgThemePicker, useBgTheme } from "@/components/AnimatedBackground";
 import { BestTimeToPostModal } from "@/components/BestTimeToPostModal";
 import { ViralScoreCard, HashtagOptimizer } from "@/components/ViralInsights";
+import {
+  PostToolbar,
+  AttachmentStrip,
+  BG_TEMPLATES,
+  type MediaAttachment,
+  type DocAttachment,
+} from "@/components/PostToolbar";
+
 import { Clock } from "lucide-react";
 
 const TONE_STEPS = [
@@ -128,6 +136,29 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   const [text, setText] = useState("");
   const [flash, setFlash] = useState<{ kind: "ok" | "err"; message: string } | null>(null);
   const [timeModalOpen, setTimeModalOpen] = useState(false);
+  const [media, setMedia] = useState<MediaAttachment[]>([]);
+  const [docs, setDocs] = useState<DocAttachment[]>([]);
+  const [bgId, setBgId] = useState<string>("none");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const bgTemplate = BG_TEMPLATES.find((t) => t.id === bgId) ?? BG_TEMPLATES[0];
+
+  function insertAtCursor(snippet: string) {
+    const ta = textareaRef.current;
+    if (!ta) {
+      setText((prev) => prev + snippet);
+      return;
+    }
+    const start = ta.selectionStart ?? text.length;
+    const end = ta.selectionEnd ?? text.length;
+    const next = text.slice(0, start) + snippet + text.slice(end);
+    setText(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      const pos = start + snippet.length;
+      ta.setSelectionRange(pos, pos);
+    });
+  }
 
   const save = useServerFn(saveDraft);
   const publish = useServerFn(publishLinkedInPost);
@@ -185,13 +216,34 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
                 {trimmed.length}/{MAX}
               </span>
             </div>
+            <div className="mb-2">
+              <PostToolbar
+                insertText={insertAtCursor}
+                onAddMedia={(m) => setMedia((prev) => [...prev, m])}
+                onAddDoc={(d) => setDocs((prev) => [...prev, d])}
+                bgId={bgId}
+                onChangeBg={setBgId}
+              />
+            </div>
             <textarea
+              ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="What do you want to share?"
               rows={12}
               className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
+            <AttachmentStrip
+              media={media}
+              docs={docs}
+              onRemoveMedia={(id) => setMedia((prev) => prev.filter((m) => m.id !== id))}
+              onRemoveDoc={(id) => setDocs((prev) => prev.filter((d) => d.id !== id))}
+            />
+            {(media.length > 0 || docs.length > 0) && (
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                Note: LinkedIn's write-only API publishes plain text. Attachments show here and in the preview only.
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => publishMutation.mutate({ text: trimmed, draftId: draftId ?? undefined })}
@@ -236,17 +288,37 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
 
           <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
             <h2 className="mb-3 text-sm font-medium">Preview</h2>
-            <div className="rounded-lg border border-border bg-background p-4">
+            <div className={`rounded-lg border border-border p-4 ${bgTemplate.className} ${bgTemplate.textClass}`}>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-muted" />
+                <div className="h-10 w-10 rounded-full bg-white/20" />
                 <div>
                   <div className="text-sm font-semibold">You</div>
-                  <div className="text-xs text-muted-foreground">Just now · 🌐</div>
+                  <div className="text-xs opacity-80">Just now · 🌐</div>
                 </div>
               </div>
               <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
-                {trimmed ? trimmed : <span className="text-muted-foreground">Your post will appear here…</span>}
+                {trimmed ? trimmed : <span className="opacity-70">Your post will appear here…</span>}
               </div>
+              {media.length > 0 && (
+                <div className={`mt-3 grid gap-2 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                  {media.map((m) =>
+                    m.kind === "image" ? (
+                      <img key={m.id} src={m.url} alt={m.name} className="max-h-64 w-full rounded-md object-cover" />
+                    ) : (
+                      <video key={m.id} src={m.url} controls className="max-h-64 w-full rounded-md object-cover" />
+                    ),
+                  )}
+                </div>
+              )}
+              {docs.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  {docs.map((d) => (
+                    <div key={d.id} className="rounded-md bg-black/10 px-3 py-2 text-xs">
+                      📄 {d.name} <span className="opacity-70">· {d.sizeKb} KB</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
