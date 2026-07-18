@@ -13,7 +13,7 @@ const THEMES: { id: BgTheme; label: string; swatch: string }[] = [
 const STORAGE_KEY = "dashboard-bg-theme";
 
 export function useBgTheme() {
-  const [theme, setTheme] = useState<BgTheme>("aurora");
+  const [theme, setTheme] = useState<BgTheme>("plain");
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) as BgTheme | null;
     if (saved) setTheme(saved);
