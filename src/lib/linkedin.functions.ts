@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/linkedin";
+const GATEWAY_ORIGIN = "https://connector-gateway.lovable.dev";
+const GATEWAY_URL = `${GATEWAY_ORIGIN}/linkedin`;
 
 function authHeaders() {
   const lovableKey = process.env.LOVABLE_API_KEY;
@@ -11,17 +12,113 @@ function authHeaders() {
   return {
     Authorization: `Bearer ${lovableKey}`,
     "X-Connection-Api-Key": linkedinKey,
+  } as Record<string, string>;
+}
+
+// LinkedIn returns an upload URL on api.linkedin.com/www.linkedin.com. Route it back
+// through the connector gateway so the OAuth token is injected for us.
+function toGatewayUrl(uploadUrl: string): string {
+  try {
+    const u = new URL(uploadUrl);
+    return `${GATEWAY_ORIGIN}/linkedin${u.pathname}${u.search}`;
+  } catch {
+    return uploadUrl;
+  }
+}
+
+type IncomingMedia = {
+  kind: "image" | "video";
+  name: string;
+  mimeType: string;
+  dataBase64: string; // raw file bytes, base64 encoded
+};
+
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function registerAndUpload(
+  authorUrn: string,
+  media: IncomingMedia,
+  headers: Record<string, string>,
+): Promise<string> {
+  const recipe =
+    media.kind === "video"
+      ? "urn:li:digitalmediaRecipe:feedshare-video"
+      : "urn:li:digitalmediaRecipe:feedshare-image";
+
+  // Step 1: registerUpload
+  const registerRes = await fetch(`${GATEWAY_URL}/v2/assets?action=registerUpload`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      registerUploadRequest: {
+        recipes: [recipe],
+        owner: authorUrn,
+        serviceRelationships: [
+          {
+            relationshipType: "OWNER",
+            identifier: "urn:li:userGeneratedContent",
+          },
+        ],
+      },
+    }),
+  });
+  if (!registerRes.ok) {
+    const body = await registerRes.text();
+    throw new Error(`LinkedIn registerUpload failed [${registerRes.status}]: ${body}`);
+  }
+  const register = (await registerRes.json()) as {
+    value?: {
+      asset?: string;
+      uploadMechanism?: Record<string, { uploadUrl?: string }>;
+    };
   };
+  const asset = register.value?.asset;
+  const mech = register.value?.uploadMechanism ?? {};
+  const uploadUrl =
+    mech["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]?.uploadUrl;
+  if (!asset || !uploadUrl) {
+    throw new Error("LinkedIn registerUpload did not return an asset/uploadUrl");
+  }
+
+  // Step 2: upload binary via gateway (so OAuth is injected)
+  const bytes = base64ToBytes(media.dataBase64);
+  const uploadRes = await fetch(toGatewayUrl(uploadUrl), {
+    method: "PUT",
+    headers: {
+      ...headers,
+      "Content-Type": media.mimeType || "application/octet-stream",
+    },
+    body: bytes,
+  });
+  if (!uploadRes.ok) {
+    const body = await uploadRes.text();
+    throw new Error(`LinkedIn media upload failed [${uploadRes.status}]: ${body}`);
+  }
+
+  return asset;
 }
 
 export const publishLinkedInPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { text: string; draftId?: string }) => {
-    const text = (data?.text ?? "").trim();
-    if (!text) throw new Error("Post text cannot be empty");
-    if (text.length > 3000) throw new Error("Post exceeds LinkedIn's 3000 character limit");
-    return { text, draftId: data?.draftId };
-  })
+  .inputValidator(
+    (data: {
+      text: string;
+      draftId?: string;
+      media?: IncomingMedia[];
+    }) => {
+      const text = (data?.text ?? "").trim();
+      if (!text) throw new Error("Post text cannot be empty");
+      if (text.length > 3000)
+        throw new Error("Post exceeds LinkedIn's 3000 character limit");
+      const media = Array.isArray(data?.media) ? data!.media!.slice(0, 9) : [];
+      return { text, draftId: data?.draftId, media };
+    },
+  )
   .handler(async ({ data, context }) => {
     const headers = authHeaders();
 
@@ -35,14 +132,45 @@ export const publishLinkedInPost = createServerFn({ method: "POST" })
     if (!userinfo.sub) throw new Error("LinkedIn userinfo missing member id");
     const authorUrn = `urn:li:person:${userinfo.sub}`;
 
+    // Determine media strategy. Videos: only 1 supported. Images: multiple allowed.
+    const hasVideo = data.media.some((m) => m.kind === "video");
+    const uploadable = hasVideo
+      ? data.media.filter((m) => m.kind === "video").slice(0, 1)
+      : data.media.filter((m) => m.kind === "image");
+
+    const shareMediaCategory: "NONE" | "IMAGE" | "VIDEO" = hasVideo
+      ? "VIDEO"
+      : uploadable.length > 0
+        ? "IMAGE"
+        : "NONE";
+
+    const mediaEntries: Array<{
+      status: "READY";
+      media: string;
+      description?: { text: string };
+      title?: { text: string };
+    }> = [];
+    for (const m of uploadable) {
+      const asset = await registerAndUpload(authorUrn, m, headers);
+      mediaEntries.push({
+        status: "READY",
+        media: asset,
+        description: { text: m.name },
+        title: { text: m.name },
+      });
+    }
+
+    const shareContent: Record<string, unknown> = {
+      shareCommentary: { text: data.text },
+      shareMediaCategory,
+    };
+    if (mediaEntries.length > 0) shareContent.media = mediaEntries;
+
     const postBody = {
       author: authorUrn,
       lifecycleState: "PUBLISHED",
       specificContent: {
-        "com.linkedin.ugc.ShareContent": {
-          shareCommentary: { text: data.text },
-          shareMediaCategory: "NONE",
-        },
+        "com.linkedin.ugc.ShareContent": shareContent,
       },
       visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" },
     };
@@ -66,7 +194,6 @@ export const publishLinkedInPost = createServerFn({ method: "POST" })
     const postId = postRes.headers.get("x-restli-id") ?? null;
     const publishedAt = new Date().toISOString();
 
-    // Persist to local history. If a draft id was supplied, promote it; otherwise insert new.
     if (data.draftId) {
       const { data: row, error } = await context.supabase
         .from("posts")
