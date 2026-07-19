@@ -272,7 +272,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             )}
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <button
-                onClick={() => publishMutation.mutate({ text: trimmed, draftId: draftId ?? undefined })}
+                onClick={() => publishMutation.mutate({ text: trimmed, draftId: draftId ?? undefined, media })}
                 disabled={!canPublish}
                 className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
