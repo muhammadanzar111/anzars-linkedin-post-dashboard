@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 // ---------- Types ----------
-export type MediaAttachment = { id: string; name: string; url: string; kind: "image" | "video" };
+export type MediaAttachment = { id: string; name: string; url: string; kind: "image" | "video"; file?: File; mimeType?: string };
 export type DocAttachment = { id: string; name: string; sizeKb: number };
 export type BgTemplate = { id: string; label: string; className: string; textClass: string };
 
