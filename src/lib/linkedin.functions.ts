@@ -93,7 +93,7 @@ async function registerAndUpload(
       ...headers,
       "Content-Type": media.mimeType || "application/octet-stream",
     },
-    body: bytes as unknown as BodyInit,
+    body: new Blob([bytes], { type: media.mimeType || "application/octet-stream" }),
   });
   if (!uploadRes.ok) {
     const body = await uploadRes.text();
