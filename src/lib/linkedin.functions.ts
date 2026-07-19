@@ -87,14 +87,14 @@ async function registerAndUpload(
   }
 
   // Step 2: upload binary via gateway (so OAuth is injected)
-  const bytes = base64ToBytes(media.dataBase64);
+  const buffer = base64ToBuffer(media.dataBase64);
   const uploadRes = await fetch(toGatewayUrl(uploadUrl), {
     method: "PUT",
     headers: {
       ...headers,
       "Content-Type": media.mimeType || "application/octet-stream",
     },
-    body: new Blob([bytes], { type: media.mimeType || "application/octet-stream" }),
+    body: buffer,
   });
   if (!uploadRes.ok) {
     const body = await uploadRes.text();
