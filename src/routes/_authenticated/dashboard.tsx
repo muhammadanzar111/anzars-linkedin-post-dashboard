@@ -174,11 +174,37 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   });
 
   const publishMutation = useMutation({
-    mutationFn: (vars: { text: string; draftId?: string }) => publish({ data: vars }),
+    mutationFn: async (vars: { text: string; draftId?: string; media: MediaAttachment[] }) => {
+      const encoded = await Promise.all(
+        vars.media
+          .filter((m) => m.file)
+          .map(async (m) => {
+            const buf = await m.file!.arrayBuffer();
+            let bin = "";
+            const bytes = new Uint8Array(buf);
+            const chunk = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunk) {
+              bin += String.fromCharCode.apply(
+                null,
+                Array.from(bytes.subarray(i, i + chunk)),
+              );
+            }
+            return {
+              kind: m.kind,
+              name: m.name,
+              mimeType: m.mimeType || m.file!.type || "application/octet-stream",
+              dataBase64: btoa(bin),
+            };
+          }),
+      );
+      return publish({ data: { text: vars.text, draftId: vars.draftId, media: encoded } });
+    },
     onSuccess: () => {
       setFlash({ kind: "ok", message: "Published to LinkedIn." });
       setText("");
       setDraftId(null);
+      setMedia([]);
+      setDocs([]);
       qc.invalidateQueries({ queryKey: ["posts"] });
     },
     onError: (e) => setFlash({ kind: "err", message: e instanceof Error ? e.message : "Publish failed" }),
