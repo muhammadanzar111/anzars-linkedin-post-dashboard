@@ -267,7 +267,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             />
             {(media.length > 0 || docs.length > 0) && (
               <p className="mt-2 text-[10px] text-muted-foreground">
-                Note: LinkedIn's write-only API publishes plain text. Attachments show here and in the preview only.
+                Note: images and videos are uploaded to LinkedIn with your post. Documents are local previews only.
               </p>
             )}
             <div className="mt-4 flex flex-wrap items-center gap-2">
