@@ -33,11 +33,12 @@ type IncomingMedia = {
   dataBase64: string; // raw file bytes, base64 encoded
 };
 
-function base64ToBytes(b64: string): Uint8Array {
+function base64ToBuffer(b64: string): ArrayBuffer {
   const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
+  const buf = new ArrayBuffer(bin.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i);
+  return buf;
 }
 
 async function registerAndUpload(
