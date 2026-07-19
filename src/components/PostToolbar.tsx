@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 // ---------- Types ----------
-export type MediaAttachment = { id: string; name: string; url: string; kind: "image" | "video" };
+export type MediaAttachment = { id: string; name: string; url: string; kind: "image" | "video"; file?: File; mimeType?: string };
 export type DocAttachment = { id: string; name: string; sizeKb: number };
 export type BgTemplate = { id: string; label: string; className: string; textClass: string };
 
@@ -127,7 +127,7 @@ export function PostToolbar({
     if (!file) return;
     const url = URL.createObjectURL(file);
     const kind: "image" | "video" = file.type.startsWith("video") ? "video" : "image";
-    onAddMedia({ id: crypto.randomUUID(), name: file.name, url, kind });
+    onAddMedia({ id: crypto.randomUUID(), name: file.name, url, kind, file, mimeType: file.type });
     e.target.value = "";
   }
   function onDocChange(e: React.ChangeEvent<HTMLInputElement>) {
