@@ -405,6 +405,13 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
       </div>
 
       <BestTimeToPostModal open={timeModalOpen} onClose={() => setTimeModalOpen(false)} />
+      <AttachmentEditor
+        open={attachmentsOpen}
+        initialMedia={media}
+        onClose={() => setAttachmentsOpen(false)}
+        onDone={(next) => setMedia(next)}
+      />
+
     </>
   );
 }
