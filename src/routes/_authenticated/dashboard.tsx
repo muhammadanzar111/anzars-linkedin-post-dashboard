@@ -141,7 +141,9 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   const [media, setMedia] = useState<MediaAttachment[]>([]);
   const [docs, setDocs] = useState<DocAttachment[]>([]);
   const [bgId, setBgId] = useState<string>("none");
+  const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
 
   const bgTemplate = BG_TEMPLATES.find((t) => t.id === bgId) ?? BG_TEMPLATES[0];
 
