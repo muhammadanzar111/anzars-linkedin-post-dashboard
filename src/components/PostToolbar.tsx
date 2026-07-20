@@ -108,13 +108,16 @@ export function PostToolbar({
   onAddDoc,
   bgId,
   onChangeBg,
+  onOpenAttachments,
 }: {
   insertText: (t: string) => void;
   onAddMedia: (m: MediaAttachment) => void;
   onAddDoc: (d: DocAttachment) => void;
   bgId: string;
   onChangeBg: (id: string) => void;
+  onOpenAttachments?: () => void;
 }) {
+
   const [open, setOpen] = useState<null | "emoji" | "celebrate" | "event" | "hiring" | "poll" | "bg" | "expand">(null);
   const [showExpanded, setShowExpanded] = useState(false);
   const close = () => setOpen(null);
