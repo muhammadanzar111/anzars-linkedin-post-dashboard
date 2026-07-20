@@ -28,6 +28,8 @@ import {
   type MediaAttachment,
   type DocAttachment,
 } from "@/components/PostToolbar";
+import { AttachmentEditor } from "@/components/AttachmentEditor";
+
 
 import { Clock } from "lucide-react";
 
