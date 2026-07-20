@@ -28,6 +28,8 @@ import {
   type MediaAttachment,
   type DocAttachment,
 } from "@/components/PostToolbar";
+import { AttachmentEditor } from "@/components/AttachmentEditor";
+
 
 import { Clock } from "lucide-react";
 
@@ -139,7 +141,9 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   const [media, setMedia] = useState<MediaAttachment[]>([]);
   const [docs, setDocs] = useState<DocAttachment[]>([]);
   const [bgId, setBgId] = useState<string>("none");
+  const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
 
   const bgTemplate = BG_TEMPLATES.find((t) => t.id === bgId) ?? BG_TEMPLATES[0];
 
@@ -249,7 +253,9 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
                 onAddDoc={(d) => setDocs((prev) => [...prev, d])}
                 bgId={bgId}
                 onChangeBg={setBgId}
+                onOpenAttachments={() => setAttachmentsOpen(true)}
               />
+
             </div>
             <textarea
               ref={textareaRef}
@@ -399,6 +405,13 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
       </div>
 
       <BestTimeToPostModal open={timeModalOpen} onClose={() => setTimeModalOpen(false)} />
+      <AttachmentEditor
+        open={attachmentsOpen}
+        initialMedia={media}
+        onClose={() => setAttachmentsOpen(false)}
+        onDone={(next) => setMedia(next)}
+      />
+
     </>
   );
 }

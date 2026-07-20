@@ -108,13 +108,16 @@ export function PostToolbar({
   onAddDoc,
   bgId,
   onChangeBg,
+  onOpenAttachments,
 }: {
   insertText: (t: string) => void;
   onAddMedia: (m: MediaAttachment) => void;
   onAddDoc: (d: DocAttachment) => void;
   bgId: string;
   onChangeBg: (id: string) => void;
+  onOpenAttachments?: () => void;
 }) {
+
   const [open, setOpen] = useState<null | "emoji" | "celebrate" | "event" | "hiring" | "poll" | "bg" | "expand">(null);
   const [showExpanded, setShowExpanded] = useState(false);
   const close = () => setOpen(null);
@@ -143,9 +146,13 @@ export function PostToolbar({
         <ToolButton title="Add emoji" active={open === "emoji"} onClick={() => setOpen(open === "emoji" ? null : "emoji")}>
           <Smile className="h-4 w-4" />
         </ToolButton>
-        <ToolButton title="Add media (image / video)" onClick={() => mediaRef.current?.click()}>
+        <ToolButton
+          title="Add media (image / video)"
+          onClick={() => (onOpenAttachments ? onOpenAttachments() : mediaRef.current?.click())}
+        >
           <ImageIcon className="h-4 w-4" />
         </ToolButton>
+
         <ToolButton title="Create an event" active={open === "event"} onClick={() => setOpen(open === "event" ? null : "event")}>
           <Calendar className="h-4 w-4" />
         </ToolButton>
