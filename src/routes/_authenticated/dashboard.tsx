@@ -253,7 +253,9 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
                 onAddDoc={(d) => setDocs((prev) => [...prev, d])}
                 bgId={bgId}
                 onChangeBg={setBgId}
+                onOpenAttachments={() => setAttachmentsOpen(true)}
               />
+
             </div>
             <textarea
               ref={textareaRef}
