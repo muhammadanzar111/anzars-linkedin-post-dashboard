@@ -561,7 +561,8 @@ const AiWriterSidebar = memo(function AiWriterSidebar({
       </div>
     </aside>
   );
-}
+});
+
 
 // ---------- History ----------
 function HistoryTab() {
