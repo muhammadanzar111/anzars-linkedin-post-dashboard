@@ -435,13 +435,14 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
 }
 
 // ---------- AI Writer Sidebar ----------
-function AiWriterSidebar({
+const AiWriterSidebar = memo(function AiWriterSidebar({
   onUseText,
   onOpenTimeModal,
 }: {
   onUseText: (text: string) => void;
   onOpenTimeModal: () => void;
 }) {
+
   const [details, setDetails] = useState("");
   const [toneLevel, setToneLevel] = useState<number>(2);
   const [generated, setGenerated] = useState<string>("");
