@@ -31,7 +31,7 @@ import {
 import { AttachmentEditor } from "@/components/AttachmentEditor";
 
 
-import { Clock } from "lucide-react";
+import { Clock, User } from "lucide-react";
 
 const TONE_STEPS = [
   "Highly Casual",
