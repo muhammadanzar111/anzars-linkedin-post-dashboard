@@ -52,7 +52,7 @@ const postsQuery = () =>
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — LinkedIn Post Studio" },
+      { title: "Dashboard — LN Post Studio" },
       {
         name: "description",
         content: "Draft, publish, and track engagement on your LinkedIn posts.",
