@@ -126,13 +126,16 @@ export function PostToolbar({
   const docRef = useRef<HTMLInputElement | null>(null);
 
   function onMediaChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    const kind: "image" | "video" = file.type.startsWith("video") ? "video" : "image";
-    onAddMedia({ id: crypto.randomUUID(), name: file.name, url, kind, file, mimeType: file.type });
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    for (const file of Array.from(files)) {
+      const url = URL.createObjectURL(file);
+      const kind: "image" | "video" = file.type.startsWith("video") ? "video" : "image";
+      onAddMedia({ id: crypto.randomUUID(), name: file.name, url, kind, file, mimeType: file.type });
+    }
     e.target.value = "";
   }
+
   function onDocChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -182,7 +185,7 @@ export function PostToolbar({
         )}
       </div>
 
-      <input ref={mediaRef} type="file" accept="image/*,video/*" className="hidden" onChange={onMediaChange} />
+      <input ref={mediaRef} type="file" multiple accept="image/*,video/*" className="hidden" onChange={onMediaChange} />
       <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" className="hidden" onChange={onDocChange} />
 
       {open === "emoji" && (

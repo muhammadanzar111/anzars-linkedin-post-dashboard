@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { X, Pencil, Tag, Copy, Trash2, Plus, Upload } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { X, Pencil, Copy, Trash2, Plus, Upload, Crop, Check, Undo2 } from "lucide-react";
 import type { MediaAttachment } from "./PostToolbar";
+
+const PEN_COLORS = ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6", "#a855f7", "#ffffff", "#000000"];
+
+type Tool = "none" | "crop" | "pen";
 
 // LinkedIn-style attachment editor modal.
 // Step 1 (no files): empty state with illustration + "Upload from computer"
-// Step 2 (files selected): left preview + edit/tag/ALT actions, right sidebar
+// Step 2 (files selected): left preview with crop/markup tools, right sidebar
 // with thumbnail list, duplicate/delete/add controls.
 export function AttachmentEditor({
   open,
@@ -21,20 +25,148 @@ export function AttachmentEditor({
   const [activeId, setActiveId] = useState<string | null>(initialMedia[0]?.id ?? null);
   const [altMap, setAltMap] = useState<Record<string, string>>({});
   const [editingAlt, setEditingAlt] = useState(false);
+  const [tool, setTool] = useState<Tool>("none");
+  const [penColor, setPenColor] = useState(PEN_COLORS[0]);
+  const [dirty, setDirty] = useState(false);
+  const [cropRect, setCropRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const drawing = useRef(false);
+  const cropStart = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (open) {
       setItems(initialMedia);
       setActiveId(initialMedia[0]?.id ?? null);
       setEditingAlt(false);
+      setTool("none");
+      setCropRect(null);
+      setDirty(false);
     }
   }, [open, initialMedia]);
 
-  if (!open) return null;
-
   const hasVideo = items.some((i) => i.kind === "video");
   const active = items.find((i) => i.id === activeId) ?? null;
+
+  // Load the active image into the canvas whenever it changes.
+  useEffect(() => {
+    if (!open || !active || active.kind !== "image") return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(img, 0, 0);
+      setDirty(false);
+      setCropRect(null);
+    };
+    img.src = active.url;
+  }, [open, active?.id, active?.url, active?.kind]);
+
+  const toCanvasCoords = useCallback((e: React.PointerEvent) => {
+    const canvas = canvasRef.current!;
+    const r = canvas.getBoundingClientRect();
+    return {
+      x: ((e.clientX - r.left) / r.width) * canvas.width,
+      y: ((e.clientY - r.top) / r.height) * canvas.height,
+    };
+  }, []);
+
+  function onPointerDown(e: React.PointerEvent) {
+    if (!canvasRef.current || tool === "none") return;
+    const p = toCanvasCoords(e);
+    if (tool === "pen") {
+      drawing.current = true;
+      const ctx = canvasRef.current.getContext("2d")!;
+      ctx.strokeStyle = penColor;
+      ctx.lineWidth = Math.max(2, canvasRef.current.width / 300);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    } else {
+      cropStart.current = p;
+      setCropRect({ x: p.x, y: p.y, w: 0, h: 0 });
+    }
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!canvasRef.current) return;
+    if (tool === "pen" && drawing.current) {
+      const p = toCanvasCoords(e);
+      const ctx = canvasRef.current.getContext("2d")!;
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      setDirty(true);
+    } else if (tool === "crop" && cropStart.current) {
+      const p = toCanvasCoords(e);
+      const s = cropStart.current;
+      setCropRect({
+        x: Math.min(s.x, p.x),
+        y: Math.min(s.y, p.y),
+        w: Math.abs(p.x - s.x),
+        h: Math.abs(p.y - s.y),
+      });
+    }
+  }
+
+  function onPointerUp() {
+    drawing.current = false;
+    cropStart.current = null;
+  }
+
+  async function commitCanvas(canvas: HTMLCanvasElement) {
+    if (!active) return;
+    const blob = await new Promise<Blob | null>((res) =>
+      canvas.toBlob((b) => res(b), "image/png"),
+    );
+    if (!blob) return;
+    const name = active.name.replace(/\.[^.]+$/, "") + "-edited.png";
+    const file = new File([blob], name, { type: "image/png" });
+    const url = URL.createObjectURL(blob);
+    setItems((prev) =>
+      prev.map((it) => (it.id === active.id ? { ...it, url, file, mimeType: "image/png", name } : it)),
+    );
+    setDirty(false);
+    setCropRect(null);
+    setTool("none");
+  }
+
+  async function applyCrop() {
+    const canvas = canvasRef.current;
+    if (!canvas || !cropRect || cropRect.w < 4 || cropRect.h < 4) return;
+    const out = document.createElement("canvas");
+    out.width = Math.round(cropRect.w);
+    out.height = Math.round(cropRect.h);
+    out
+      .getContext("2d")!
+      .drawImage(canvas, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, out.width, out.height);
+    await commitCanvas(out);
+  }
+
+  function resetActive() {
+    // Re-draw from the original URL by nudging the effect.
+    const cur = active;
+    if (!cur) return;
+    setCropRect(null);
+    setDirty(false);
+    setItems((prev) => prev.map((it) => (it.id === cur.id ? { ...it } : it)));
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext("2d")?.drawImage(img, 0, 0);
+      };
+      img.src = cur.url;
+    }
+  }
+
+  if (!open) return null;
 
   function pickFiles() {
     fileRef.current?.click();
@@ -43,12 +175,13 @@ export function AttachmentEditor({
   function addFiles(list: FileList | null) {
     if (!list || list.length === 0) return;
     const incoming: MediaAttachment[] = [];
+    let videoOnly = false;
     for (const file of Array.from(list)) {
       const kind: "image" | "video" = file.type.startsWith("video") ? "video" : "image";
-      // Videos: LinkedIn allows a single video, and can't be mixed with images.
       if (kind === "video") {
-        // Replace everything with just this video (LinkedIn constraint)
+        // LinkedIn allows a single video and it can't be mixed with images.
         incoming.length = 0;
+        videoOnly = true;
         incoming.push({
           id: crypto.randomUUID(),
           name: file.name,
@@ -59,7 +192,6 @@ export function AttachmentEditor({
         });
         break;
       }
-      if (hasVideo) continue; // ignore extra images when a video already exists
       incoming.push({
         id: crypto.randomUUID(),
         name: file.name,
@@ -70,10 +202,8 @@ export function AttachmentEditor({
       });
     }
     setItems((prev) => {
-      const isVideoIncoming = incoming.some((i) => i.kind === "video");
-      const next = isVideoIncoming ? incoming : [...prev, ...incoming].slice(0, 9);
-      if (!activeId && next[0]) setActiveId(next[0].id);
-      else if (isVideoIncoming) setActiveId(next[0]?.id ?? null);
+      const next = videoOnly ? incoming : [...prev.filter((p) => p.kind !== "video"), ...incoming].slice(0, 9);
+      setActiveId(videoOnly ? (next[0]?.id ?? null) : (incoming[0]?.id ?? next[0]?.id ?? null));
       return next;
     });
   }
@@ -108,7 +238,7 @@ export function AttachmentEditor({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-      <div className="flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 text-neutral-100 shadow-2xl">
+      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 text-neutral-100 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-neutral-800 px-5 py-3">
           <h3 className="text-base font-semibold">Editor</h3>
@@ -148,45 +278,75 @@ export function AttachmentEditor({
         {items.length === 0 ? (
           <EmptyState onPick={pickFiles} />
         ) : (
-          <div className="grid min-h-[520px] grid-cols-1 md:grid-cols-[1fr_260px]">
+          <div className="grid min-h-[520px] grid-cols-1 overflow-y-auto md:grid-cols-[1fr_260px]">
             {/* LEFT — preview */}
             <div className="flex flex-col border-b border-neutral-800 md:border-b-0 md:border-r">
-              <div className="flex flex-1 items-center justify-center bg-neutral-900 p-6">
+              <div className="relative flex flex-1 items-center justify-center bg-neutral-900 p-6">
                 {active ? (
                   active.kind === "image" ? (
-                    <img
-                      src={active.url}
-                      alt={activeAlt || active.name}
-                      className="max-h-[440px] max-w-full rounded-lg object-contain shadow-lg"
-                    />
+                    <div className="relative inline-block max-h-[440px] max-w-full">
+                      <canvas
+                        ref={canvasRef}
+                        onPointerDown={onPointerDown}
+                        onPointerMove={onPointerMove}
+                        onPointerUp={onPointerUp}
+                        onPointerLeave={onPointerUp}
+                        style={{ maxHeight: 440, maxWidth: "100%", width: "auto", height: "auto" }}
+                        className={`block rounded-lg object-contain shadow-lg ${
+                          tool === "pen" ? "cursor-crosshair" : tool === "crop" ? "cursor-cell" : ""
+                        }`}
+                      />
+                      {tool === "crop" && cropRect && cropRect.w > 2 && canvasRef.current && (
+                        <div
+                          className="pointer-events-none absolute border-2 border-emerald-400 bg-emerald-400/10"
+                          style={{
+                            left: `${(cropRect.x / canvasRef.current.width) * 100}%`,
+                            top: `${(cropRect.y / canvasRef.current.height) * 100}%`,
+                            width: `${(cropRect.w / canvasRef.current.width) * 100}%`,
+                            height: `${(cropRect.h / canvasRef.current.height) * 100}%`,
+                          }}
+                        />
+                      )}
+                    </div>
                   ) : (
                     <video
                       src={active.url}
                       controls
-                      className="max-h-[440px] max-w-full rounded-lg shadow-lg"
+                      className="max-h-[440px] max-w-full rounded-lg object-contain shadow-lg"
                     />
                   )
                 ) : null}
               </div>
+
               {/* Action row */}
-              <div className="flex items-center gap-6 border-t border-neutral-800 bg-neutral-950 px-6 py-3 text-sm">
+              <div className="flex flex-wrap items-center gap-4 border-t border-neutral-800 bg-neutral-950 px-6 py-3 text-sm">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 text-neutral-300 transition-colors hover:text-white"
-                  onClick={pickFiles}
+                  disabled={!active || active.kind !== "image"}
+                  onClick={() => {
+                    setTool((t) => (t === "pen" ? "none" : "pen"));
+                    setCropRect(null);
+                  }}
+                  className={`inline-flex items-center gap-2 rounded-full px-2 py-1 transition-colors disabled:opacity-40 ${
+                    tool === "pen" ? "bg-blue-600 text-white" : "text-neutral-300 hover:text-white"
+                  }`}
                 >
                   <Pencil className="h-4 w-4" />
                   Edit
                 </button>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 text-neutral-300 transition-colors hover:text-white"
-                  onClick={() =>
-                    alert("Tagging people isn't supported by the LinkedIn public API.")
-                  }
+                  disabled={!active || active.kind !== "image"}
+                  onClick={() => {
+                    setTool((t) => (t === "crop" ? "none" : "crop"));
+                    setCropRect(null);
+                  }}
+                  className={`inline-flex items-center gap-2 rounded-full px-2 py-1 transition-colors disabled:opacity-40 ${
+                    tool === "crop" ? "bg-blue-600 text-white" : "text-neutral-300 hover:text-white"
+                  }`}
                 >
-                  <Tag className="h-4 w-4" />
-                  Tag
+                  <Crop className="h-4 w-4" />
+                  Crop
                 </button>
                 <button
                   type="button"
@@ -199,7 +359,62 @@ export function AttachmentEditor({
                 >
                   ALT
                 </button>
+
+                {tool === "pen" && (
+                  <div className="ml-auto flex items-center gap-2">
+                    {PEN_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setPenColor(c)}
+                        aria-label={`Pen color ${c}`}
+                        style={{ background: c }}
+                        className={`h-5 w-5 rounded-full border ${
+                          penColor === c ? "border-white ring-2 ring-blue-500" : "border-neutral-600"
+                        }`}
+                      />
+                    ))}
+                    <input
+                      type="color"
+                      value={penColor}
+                      onChange={(e) => setPenColor(e.target.value)}
+                      className="h-6 w-8 cursor-pointer rounded border border-neutral-700 bg-transparent"
+                      aria-label="Custom pen color"
+                    />
+                  </div>
+                )}
+
+                {tool === "crop" && (
+                  <button
+                    type="button"
+                    onClick={applyCrop}
+                    disabled={!cropRect || cropRect.w < 4}
+                    className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-40"
+                  >
+                    <Check className="h-3.5 w-3.5" /> Apply crop
+                  </button>
+                )}
+
+                {tool === "pen" && dirty && (
+                  <div className="flex w-full items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => canvasRef.current && commitCanvas(canvasRef.current)}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Save markup
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetActive}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-neutral-700 px-3 py-1 text-xs text-neutral-300 hover:text-white"
+                    >
+                      <Undo2 className="h-3.5 w-3.5" /> Reset
+                    </button>
+                  </div>
+                )}
               </div>
+
               {editingAlt && active && (
                 <div className="border-t border-neutral-800 bg-neutral-950 px-6 py-3">
                   <label className="mb-1 block text-xs font-medium text-neutral-400">
@@ -208,9 +423,7 @@ export function AttachmentEditor({
                   <textarea
                     rows={2}
                     value={activeAlt}
-                    onChange={(e) =>
-                      setAltMap((m) => ({ ...m, [active.id]: e.target.value }))
-                    }
+                    onChange={(e) => setAltMap((m) => ({ ...m, [active.id]: e.target.value }))}
                     placeholder="Describe this image…"
                     className="w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-blue-500"
                   />
@@ -237,20 +450,16 @@ export function AttachmentEditor({
                       className="block w-full text-left"
                     >
                       <div
-                        className={`relative overflow-hidden rounded-lg border-2 transition-all ${
+                        className={`relative overflow-hidden rounded-lg border-2 bg-neutral-900 transition-all ${
                           isActive
                             ? "border-emerald-400 shadow-[0_0_0_2px_rgba(52,211,153,0.25)]"
                             : "border-transparent hover:border-neutral-700"
                         }`}
                       >
                         {it.kind === "image" ? (
-                          <img
-                            src={it.url}
-                            alt={it.name}
-                            className="h-24 w-full object-cover"
-                          />
+                          <img src={it.url} alt={it.name} className="h-24 w-full object-contain" />
                         ) : (
-                          <video src={it.url} className="h-24 w-full object-cover" />
+                          <video src={it.url} className="h-24 w-full object-contain" />
                         )}
                       </div>
                       <div
@@ -286,7 +495,7 @@ export function AttachmentEditor({
                 <button
                   type="button"
                   onClick={pickFiles}
-                  title="Add more"
+                  title="Add more files"
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white transition-colors hover:bg-blue-500"
                 >
                   <Plus className="h-5 w-5" />

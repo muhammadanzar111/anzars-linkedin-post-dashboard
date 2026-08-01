@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -31,7 +31,7 @@ import {
 import { AttachmentEditor } from "@/components/AttachmentEditor";
 
 
-import { Clock } from "lucide-react";
+import { Clock, User } from "lucide-react";
 
 const TONE_STEPS = [
   "Highly Casual",
@@ -52,7 +52,7 @@ const postsQuery = () =>
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — LinkedIn Post Studio" },
+      { title: "Dashboard — LN Post Studio" },
       {
         name: "description",
         content: "Draft, publish, and track engagement on your LinkedIn posts.",
@@ -88,7 +88,7 @@ function Dashboard() {
       <header className="border-b border-border/60 bg-card/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-foreground">LinkedIn Post Studio</h1>
+            <h1 className="text-lg font-semibold tracking-tight text-foreground">LN Post Studio</h1>
             <p className="text-xs text-muted-foreground">Draft • Publish • Track</p>
           </div>
           <div className="flex items-center gap-3">
@@ -215,7 +215,12 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   });
 
   const trimmed = text.trim();
-  const canPublish = trimmed.length > 0 && trimmed.length <= MAX && !publishMutation.isPending;
+  // Text-free posting allowed when at least one media asset is queued.
+  const canPublish =
+    (trimmed.length > 0 || media.length > 0) &&
+    trimmed.length <= MAX &&
+    !publishMutation.isPending;
+
 
   function loadDraft(d: Post) {
     setDraftId(d.id);
@@ -228,13 +233,20 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
     setFlash(null);
   }
 
+  // Stable callbacks so the memoized AI sidebar doesn't re-render while typing.
+  const handleUseAiText = useCallback((t: string) => {
+    setText(t);
+    setFlash({ kind: "ok", message: "AI draft moved to composer." });
+  }, []);
+  const openTimeModal = useCallback(() => setTimeModalOpen(true), []);
+
+
+
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-5">
-        <AiWriterSidebar
-          onUseText={(t) => { setText(t); setFlash({ kind: "ok", message: "AI draft moved to composer." }); }}
-          onOpenTimeModal={() => setTimeModalOpen(true)}
-        />
+        <AiWriterSidebar onUseText={handleUseAiText} onOpenTimeModal={openTimeModal} />
+
 
         <section className="lg:col-span-3">
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -322,7 +334,9 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             <h2 className="mb-3 text-sm font-medium">Preview</h2>
             <div className={`rounded-lg border border-border p-4 ${bgTemplate.className} ${bgTemplate.textClass}`}>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-white/20" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/10 ring-1 ring-black/10">
+                  <User className="h-5 w-5 opacity-70" />
+                </div>
                 <div>
                   <div className="text-sm font-semibold">You</div>
                   <div className="text-xs opacity-80">Just now · 🌐</div>
@@ -335,13 +349,24 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
                 <div className={`mt-3 grid gap-2 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                   {media.map((m) =>
                     m.kind === "image" ? (
-                      <img key={m.id} src={m.url} alt={m.name} className="max-h-64 w-full rounded-md object-cover" />
+                      <img
+                        key={m.id}
+                        src={m.url}
+                        alt={m.name}
+                        className="max-h-80 w-full rounded-md bg-black/5 object-contain"
+                      />
                     ) : (
-                      <video key={m.id} src={m.url} controls className="max-h-64 w-full rounded-md object-cover" />
+                      <video
+                        key={m.id}
+                        src={m.url}
+                        controls
+                        className="max-h-80 w-full rounded-md bg-black/5 object-contain"
+                      />
                     ),
                   )}
                 </div>
               )}
+
               {docs.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {docs.map((d) => (
@@ -417,13 +442,14 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
 }
 
 // ---------- AI Writer Sidebar ----------
-function AiWriterSidebar({
+const AiWriterSidebar = memo(function AiWriterSidebar({
   onUseText,
   onOpenTimeModal,
 }: {
   onUseText: (text: string) => void;
   onOpenTimeModal: () => void;
 }) {
+
   const [details, setDetails] = useState("");
   const [toneLevel, setToneLevel] = useState<number>(2);
   const [generated, setGenerated] = useState<string>("");
@@ -525,17 +551,25 @@ function AiWriterSidebar({
               {generated}
             </div>
             <button
-              onClick={() => onUseText(generated)}
+              onClick={() => {
+                onUseText(generated);
+                // Reset the generator so the next post starts fresh.
+                setGenerated("");
+                setDetails("");
+                genMutation.reset();
+              }}
               className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
             >
               Move to Composer ➜
             </button>
+
           </div>
         )}
       </div>
     </aside>
   );
-}
+});
+
 
 // ---------- History ----------
 function HistoryTab() {
