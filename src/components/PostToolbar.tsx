@@ -182,7 +182,7 @@ export function PostToolbar({
         )}
       </div>
 
-      <input ref={mediaRef} type="file" accept="image/*,video/*" className="hidden" onChange={onMediaChange} />
+      <input ref={mediaRef} type="file" multiple accept="image/*,video/*" className="hidden" onChange={onMediaChange} />
       <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" className="hidden" onChange={onDocChange} />
 
       {open === "emoji" && (
