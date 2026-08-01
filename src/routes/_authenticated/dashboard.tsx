@@ -88,7 +88,7 @@ function Dashboard() {
       <header className="border-b border-border/60 bg-card/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-foreground">LinkedIn Post Studio</h1>
+            <h1 className="text-lg font-semibold tracking-tight text-foreground">LN Post Studio</h1>
             <p className="text-xs text-muted-foreground">Draft • Publish • Track</p>
           </div>
           <div className="flex items-center gap-3">
