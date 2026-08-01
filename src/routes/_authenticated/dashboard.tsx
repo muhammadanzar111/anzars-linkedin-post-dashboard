@@ -327,7 +327,9 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             <h2 className="mb-3 text-sm font-medium">Preview</h2>
             <div className={`rounded-lg border border-border p-4 ${bgTemplate.className} ${bgTemplate.textClass}`}>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-white/20" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/10 ring-1 ring-black/10">
+                  <User className="h-5 w-5 opacity-70" />
+                </div>
                 <div>
                   <div className="text-sm font-semibold">You</div>
                   <div className="text-xs opacity-80">Just now · 🌐</div>
@@ -340,13 +342,24 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
                 <div className={`mt-3 grid gap-2 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                   {media.map((m) =>
                     m.kind === "image" ? (
-                      <img key={m.id} src={m.url} alt={m.name} className="max-h-64 w-full rounded-md object-cover" />
+                      <img
+                        key={m.id}
+                        src={m.url}
+                        alt={m.name}
+                        className="max-h-80 w-full rounded-md bg-black/5 object-contain"
+                      />
                     ) : (
-                      <video key={m.id} src={m.url} controls className="max-h-64 w-full rounded-md object-cover" />
+                      <video
+                        key={m.id}
+                        src={m.url}
+                        controls
+                        className="max-h-80 w-full rounded-md bg-black/5 object-contain"
+                      />
                     ),
                   )}
                 </div>
               )}
+
               {docs.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {docs.map((d) => (
