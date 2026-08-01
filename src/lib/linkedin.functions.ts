@@ -113,13 +113,16 @@ export const publishLinkedInPost = createServerFn({ method: "POST" })
       media?: IncomingMedia[];
     }) => {
       const text = (data?.text ?? "").trim();
-      if (!text) throw new Error("Post text cannot be empty");
       if (text.length > 3000)
         throw new Error("Post exceeds LinkedIn's 3000 character limit");
       const media = Array.isArray(data?.media) ? data!.media!.slice(0, 9) : [];
+      // Text-free posting is allowed as long as at least one media asset exists.
+      if (!text && media.length === 0)
+        throw new Error("Add some text or at least one image/video before publishing");
       return { text, draftId: data?.draftId, media };
     },
   )
+
   .handler(async ({ data, context }) => {
     const headers = authHeaders();
 
