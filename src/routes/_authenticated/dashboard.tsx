@@ -215,7 +215,12 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   });
 
   const trimmed = text.trim();
-  const canPublish = trimmed.length > 0 && trimmed.length <= MAX && !publishMutation.isPending;
+  // Text-free posting allowed when at least one media asset is queued.
+  const canPublish =
+    (trimmed.length > 0 || media.length > 0) &&
+    trimmed.length <= MAX &&
+    !publishMutation.isPending;
+
 
   function loadDraft(d: Post) {
     setDraftId(d.id);
