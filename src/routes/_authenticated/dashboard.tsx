@@ -236,10 +236,8 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-5">
-        <AiWriterSidebar
-          onUseText={(t) => { setText(t); setFlash({ kind: "ok", message: "AI draft moved to composer." }); }}
-          onOpenTimeModal={() => setTimeModalOpen(true)}
-        />
+        <AiWriterSidebar onUseText={handleUseAiText} onOpenTimeModal={openTimeModal} />
+
 
         <section className="lg:col-span-3">
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
