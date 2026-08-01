@@ -233,6 +233,15 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
     setFlash(null);
   }
 
+  // Stable callbacks so the memoized AI sidebar doesn't re-render while typing.
+  const handleUseAiText = useCallback((t: string) => {
+    setText(t);
+    setFlash({ kind: "ok", message: "AI draft moved to composer." });
+  }, []);
+  const openTimeModal = useCallback(() => setTimeModalOpen(true), []);
+
+
+
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-5">
