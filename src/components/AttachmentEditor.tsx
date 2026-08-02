@@ -350,7 +350,7 @@ export function AttachmentEditor({
               </div>
 
               {/* Action row */}
-              <div className="flex flex-wrap items-center gap-4 border-t border-neutral-800 bg-neutral-950 px-6 py-3 text-sm">
+              <div className="flex flex-wrap items-center justify-center gap-4 border-t border-neutral-800 bg-neutral-950 px-6 py-3 text-sm">
                 <button
                   type="button"
                   disabled={!active || active.kind !== "image"}
