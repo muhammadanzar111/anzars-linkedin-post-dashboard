@@ -112,9 +112,9 @@ function Dashboard() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`border-b-2 px-3 py-2 text-sm font-medium capitalize transition-colors ${
+              className={`border-b-2 px-3 py-2 text-sm font-medium capitalize transition-all ${
                 tab === t
-                  ? "border-primary text-foreground"
+                  ? "border-indigo-400 text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -124,12 +124,12 @@ function Dashboard() {
         </nav>
       </header>
 
-
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main key={tab} className="relative mx-auto max-w-6xl animate-fade-in-up px-6 py-8">
         {tab === "compose" && <ComposeTab onGoHistory={() => setTab("history")} />}
         {tab === "history" && <HistoryTab />}
         {tab === "analytics" && <AnalyticsTab />}
       </main>
+
     </div>
   );
 }
