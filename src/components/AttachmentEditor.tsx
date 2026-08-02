@@ -164,7 +164,21 @@ export function AttachmentEditor({
     await commitCanvas(out);
   }
 
+  async function rotateActive() {
+    const canvas = canvasRef.current;
+    if (!canvas || !active || active.kind !== "image") return;
+    const out = document.createElement("canvas");
+    out.width = canvas.height;
+    out.height = canvas.width;
+    const ctx = out.getContext("2d")!;
+    ctx.translate(out.width / 2, out.height / 2);
+    ctx.rotate(Math.PI / 2);
+    ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+    await commitCanvas(out);
+  }
+
   function resetActive() {
+
     // Re-draw from the original URL by nudging the effect.
     const cur = active;
     if (!cur) return;
