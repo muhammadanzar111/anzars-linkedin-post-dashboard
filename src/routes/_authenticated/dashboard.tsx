@@ -405,9 +405,10 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
           </div>
 
           <div className="mt-6 glass-card p-5">
-
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-medium">Drafts</h2>
+              <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25">
+                Drafts Quick Manager
+              </h2>
               <span className="text-xs text-muted-foreground">{drafts.length}</span>
             </div>
             {drafts.length === 0 ? (
@@ -415,23 +416,43 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             ) : (
               <ul className="grid gap-2 sm:grid-cols-2">
                 {drafts.map((d) => (
-                  <li key={d.id}>
-                    <button
-                      onClick={() => loadDraft(d)}
-                      className={`w-full rounded-md border p-2 text-left text-xs transition-colors ${
-                        draftId === d.id ? "border-primary bg-accent" : "border-border hover:bg-accent"
-                      }`}
-                    >
+                  <li
+                    key={d.id}
+                    className={`flex items-start gap-2 rounded-xl border p-2 text-xs transition-colors ${
+                      draftId === d.id
+                        ? "border-indigo-500/60 bg-indigo-500/10"
+                        : "border-slate-700/50 hover:border-indigo-500/40 hover:bg-slate-800/40"
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
                       <div className="line-clamp-2 text-foreground">{d.content || "(empty)"}</div>
                       <div className="mt-1 text-[10px] text-muted-foreground">
                         {new Date(d.updated_at).toLocaleString()}
                       </div>
-                    </button>
+                    </div>
+                    <div className="flex shrink-0 flex-col gap-1">
+                      <button
+                        onClick={() => loadDraft(d)}
+                        title="Edit draft"
+                        className="rounded-lg border border-slate-700/60 p-1.5 text-muted-foreground transition-colors hover:border-indigo-500/50 hover:text-foreground"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => deleteMutation.mutate(d.id)}
+                        disabled={deleteMutation.isPending}
+                        title="Delete draft"
+                        className="rounded-lg border border-slate-700/60 p-1.5 text-muted-foreground transition-colors hover:border-rose-500/50 hover:text-rose-400 disabled:opacity-40"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </div>
+
         </section>
       </div>
 
