@@ -249,7 +249,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
 
 
         <section className="lg:col-span-3">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="glass-card p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-medium">{draftId ? "Editing draft" : "New draft"}</h2>
               <span
@@ -330,7 +330,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             )}
           </div>
 
-          <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="mt-6 glass-card p-5">
             <h2 className="mb-3 text-sm font-medium">Preview</h2>
             <div className={`rounded-lg border border-border p-4 ${bgTemplate.className} ${bgTemplate.textClass}`}>
               <div className="flex items-center gap-3">
@@ -398,7 +398,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             />
           </div>
 
-          <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="mt-6 glass-card p-5">
 
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-medium">Drafts</h2>
@@ -592,7 +592,7 @@ function HistoryTab() {
   return (
     <div className="space-y-3">
       {posts.map((p) => (
-        <article key={p.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <article key={p.id} className="glass-card p-5">
           <div className="mb-2 flex items-center gap-2 text-xs">
             <span
               className={`rounded-full px-2 py-0.5 font-medium ${
@@ -853,7 +853,7 @@ function AnalyticsTab() {
         </ChartCard>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <div className="glass-card p-5">
         <h3 className="mb-3 text-sm font-medium">Top posts by engagement</h3>
         <ol className="space-y-3">
           {top.map((p, i) => {
@@ -893,7 +893,7 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <h3 className="mb-3 text-sm font-medium">{title}</h3>
       {children}
     </div>

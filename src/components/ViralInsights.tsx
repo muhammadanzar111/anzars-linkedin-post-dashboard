@@ -92,7 +92,7 @@ export function ViralScoreCard({ text }: { text: string }) {
   const dash = (score / 100) * c;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-medium">Viral Score Predictor</h2>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -295,7 +295,7 @@ export function HashtagOptimizer({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-medium">Hashtag Optimizer</h2>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
