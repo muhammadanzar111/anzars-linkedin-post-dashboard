@@ -354,7 +354,35 @@ export function AttachmentEditor({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEditingAlt((v) => !v)}
+                  disabled={!active || active.kind !== "image"}
+                  onClick={rotateActive}
+                  title="Rotate 90°"
+                  className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-neutral-300 transition-colors hover:text-white disabled:opacity-40"
+                >
+                  <RotateCw className="h-4 w-4" />
+                  Rotate
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTaggingOpen((v) => !v);
+                    setEditingAlt(false);
+                  }}
+                  className={`inline-flex items-center gap-2 rounded-full px-2 py-1 transition-colors ${
+                    taggingOpen || (active && (tagMap[active.id] ?? []).length > 0)
+                      ? "bg-blue-600 text-white"
+                      : "text-neutral-300 hover:text-white"
+                  }`}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Tag
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingAlt((v) => !v);
+                    setTaggingOpen(false);
+                  }}
                   className={`inline-flex items-center gap-2 rounded border px-2 py-0.5 text-xs font-bold tracking-wide transition-colors ${
                     activeAlt
                       ? "border-blue-500 text-blue-300"
@@ -363,6 +391,7 @@ export function AttachmentEditor({
                 >
                   ALT
                 </button>
+
 
                 {tool === "pen" && (
                   <div className="ml-auto flex items-center gap-2">
