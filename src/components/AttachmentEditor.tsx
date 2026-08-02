@@ -24,8 +24,12 @@ export function AttachmentEditor({
   const [items, setItems] = useState<MediaAttachment[]>(initialMedia);
   const [activeId, setActiveId] = useState<string | null>(initialMedia[0]?.id ?? null);
   const [altMap, setAltMap] = useState<Record<string, string>>({});
+  const [tagMap, setTagMap] = useState<Record<string, string[]>>({});
+  const [tagDraft, setTagDraft] = useState("");
+  const [taggingOpen, setTaggingOpen] = useState(false);
   const [editingAlt, setEditingAlt] = useState(false);
   const [tool, setTool] = useState<Tool>("none");
+
   const [penColor, setPenColor] = useState(PEN_COLORS[0]);
   const [dirty, setDirty] = useState(false);
   const [cropRect, setCropRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
