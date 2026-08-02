@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X, Pencil, Copy, Trash2, Plus, Upload, Crop, Check, Undo2 } from "lucide-react";
+import {
+  X,
+  Pencil,
+  Copy,
+  Trash2,
+  Plus,
+  Upload,
+  Crop,
+  Check,
+  Undo2,
+  RotateCw,
+  UserPlus,
+} from "lucide-react";
+
 import type { MediaAttachment } from "./PostToolbar";
 
 const PEN_COLORS = ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6", "#a855f7", "#ffffff", "#000000"];
