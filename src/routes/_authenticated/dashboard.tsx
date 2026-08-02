@@ -31,7 +31,7 @@ import {
 import { AttachmentEditor } from "@/components/AttachmentEditor";
 
 
-import { Clock, User } from "lucide-react";
+import { Clock, User, Pencil, Trash2 } from "lucide-react";
 
 const TONE_STEPS = [
   "Highly Casual",
@@ -80,12 +80,18 @@ function Dashboard() {
     navigate({ to: "/auth" });
   }
 
-  const isDark = bgTheme === "aurora" || bgTheme === "grid" || bgTheme === "sunset";
-
+  // The studio always renders on a deep dark base; the picker only swaps the
+  // animated background layer on top of it.
   return (
-    <div className={`${isDark ? "dark" : ""} relative min-h-screen text-foreground ${bgTheme === "plain" ? "bg-background" : ""}`}>
+    <div className="dark relative min-h-screen overflow-x-hidden bg-slate-950 text-foreground">
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="glow-sphere -left-24 -top-32 h-96 w-96 bg-indigo-600/40" />
+        <div className="glow-sphere -right-24 top-24 h-80 w-80 bg-violet-600/30" />
+        <div className="glow-sphere bottom-0 left-1/3 h-72 w-72 bg-blue-600/25" />
+      </div>
       <AnimatedBackground theme={bgTheme} />
-      <header className="border-b border-border/60 bg-card/70 backdrop-blur-xl">
+      <header className="relative border-b border-slate-800/60 bg-slate-900/50 backdrop-blur-xl">
+
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-foreground">LN Post Studio</h1>
@@ -106,9 +112,9 @@ function Dashboard() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`border-b-2 px-3 py-2 text-sm font-medium capitalize transition-colors ${
+              className={`border-b-2 px-3 py-2 text-sm font-medium capitalize transition-all ${
                 tab === t
-                  ? "border-primary text-foreground"
+                  ? "border-indigo-400 text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -118,12 +124,12 @@ function Dashboard() {
         </nav>
       </header>
 
-
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main key={tab} className="relative mx-auto max-w-6xl animate-fade-in-up px-6 py-8">
         {tab === "compose" && <ComposeTab onGoHistory={() => setTab("history")} />}
         {tab === "history" && <HistoryTab />}
         {tab === "analytics" && <AnalyticsTab />}
       </main>
+
     </div>
   );
 }
@@ -166,6 +172,21 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
 
   const save = useServerFn(saveDraft);
   const publish = useServerFn(publishLinkedInPost);
+  const removePost = useServerFn(deletePost);
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => removePost({ data: { id } }),
+    onSuccess: (_res, id) => {
+      if (draftId === id) {
+        setDraftId(null);
+        setText("");
+      }
+      setFlash({ kind: "ok", message: "Draft deleted." });
+      qc.invalidateQueries({ queryKey: ["posts"] });
+    },
+    onError: (e) =>
+      setFlash({ kind: "err", message: e instanceof Error ? e.message : "Delete failed" }),
+  });
 
   const saveMutation = useMutation({
     mutationFn: (vars: { id?: string; content: string }) => save({ data: vars }),
@@ -249,7 +270,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
 
 
         <section className="lg:col-span-3">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="glass-card p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-medium">{draftId ? "Editing draft" : "New draft"}</h2>
               <span
@@ -275,7 +296,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
               onChange={(e) => setText(e.target.value)}
               placeholder="What do you want to share?"
               rows={12}
-              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="w-full resize-y rounded-xl border border-slate-700/50 bg-slate-900/80 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/50"
             />
             <AttachmentStrip
               media={media}
@@ -292,20 +313,20 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
               <button
                 onClick={() => publishMutation.mutate({ text: trimmed, draftId: draftId ?? undefined, media })}
                 disabled={!canPublish}
-                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5 hover:shadow-indigo-500/40 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
                 {publishMutation.isPending ? "Publishing…" : "Publish to LinkedIn"}
               </button>
               <button
                 onClick={() => saveMutation.mutate({ id: draftId ?? undefined, content: text })}
                 disabled={!trimmed || saveMutation.isPending}
-                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/30 px-4 py-2 text-sm font-medium text-foreground transition-all hover:border-indigo-500/50 hover:bg-slate-800/60 active:scale-95 disabled:opacity-50"
               >
                 {saveMutation.isPending ? "Saving…" : draftId ? "Update draft" : "Save draft"}
               </button>
               <button
                 onClick={newDraft}
-                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/30 px-4 py-2 text-sm font-medium text-foreground transition-all hover:border-indigo-500/50 hover:bg-slate-800/60 active:scale-95"
               >
                 New
               </button>
@@ -330,7 +351,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             )}
           </div>
 
-          <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="mt-6 glass-card p-5">
             <h2 className="mb-3 text-sm font-medium">Preview</h2>
             <div className={`rounded-lg border border-border p-4 ${bgTemplate.className} ${bgTemplate.textClass}`}>
               <div className="flex items-center gap-3">
@@ -398,10 +419,11 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             />
           </div>
 
-          <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-
+          <div className="mt-6 glass-card p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-medium">Drafts</h2>
+              <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25">
+                Drafts Quick Manager
+              </h2>
               <span className="text-xs text-muted-foreground">{drafts.length}</span>
             </div>
             {drafts.length === 0 ? (
@@ -409,23 +431,43 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             ) : (
               <ul className="grid gap-2 sm:grid-cols-2">
                 {drafts.map((d) => (
-                  <li key={d.id}>
-                    <button
-                      onClick={() => loadDraft(d)}
-                      className={`w-full rounded-md border p-2 text-left text-xs transition-colors ${
-                        draftId === d.id ? "border-primary bg-accent" : "border-border hover:bg-accent"
-                      }`}
-                    >
+                  <li
+                    key={d.id}
+                    className={`flex items-start gap-2 rounded-xl border p-2 text-xs transition-colors ${
+                      draftId === d.id
+                        ? "border-indigo-500/60 bg-indigo-500/10"
+                        : "border-slate-700/50 hover:border-indigo-500/40 hover:bg-slate-800/40"
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
                       <div className="line-clamp-2 text-foreground">{d.content || "(empty)"}</div>
                       <div className="mt-1 text-[10px] text-muted-foreground">
                         {new Date(d.updated_at).toLocaleString()}
                       </div>
-                    </button>
+                    </div>
+                    <div className="flex shrink-0 flex-col gap-1">
+                      <button
+                        onClick={() => loadDraft(d)}
+                        title="Edit draft"
+                        className="rounded-lg border border-slate-700/60 p-1.5 text-muted-foreground transition-colors hover:border-indigo-500/50 hover:text-foreground"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => deleteMutation.mutate(d.id)}
+                        disabled={deleteMutation.isPending}
+                        title="Delete draft"
+                        className="rounded-lg border border-slate-700/60 p-1.5 text-muted-foreground transition-colors hover:border-rose-500/50 hover:text-rose-400 disabled:opacity-40"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </div>
+
         </section>
       </div>
 
@@ -464,9 +506,9 @@ const AiWriterSidebar = memo(function AiWriterSidebar({
 
   return (
     <aside className="lg:col-span-2">
-      <div className="sticky top-6 rounded-xl border border-border bg-gradient-to-b from-card to-card/60 p-5 shadow-sm">
+      <div className="glass-card sticky top-6 p-5">
         <div className="mb-4">
-          <h2 className="text-base font-semibold tracking-tight">AI Post Generator ✨</h2>
+          <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25 text-base">AI Post Generator ✨</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Turn raw notes into a scroll-stopping LinkedIn post.
           </p>
@@ -507,14 +549,14 @@ const AiWriterSidebar = memo(function AiWriterSidebar({
           onChange={(e) => setDetails(e.target.value)}
           rows={6}
           placeholder="e.g., I just finished an unemployment data analysis project using Python. We used linear regression to predict trends..."
-          className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className="w-full resize-y rounded-xl border border-slate-700/50 bg-slate-900/80 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/50"
         />
 
         <div className="mt-4 flex gap-2">
           <button
             onClick={() => genMutation.mutate({ details: details.trim(), toneLevel })}
             disabled={!canGen}
-            className="inline-flex flex-1 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5 hover:shadow-indigo-500/40 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {genMutation.isPending ? "Generating…" : "Generate Post 🚀"}
           </button>
@@ -592,7 +634,7 @@ function HistoryTab() {
   return (
     <div className="space-y-3">
       {posts.map((p) => (
-        <article key={p.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <article key={p.id} className="glass-card p-5">
           <div className="mb-2 flex items-center gap-2 text-xs">
             <span
               className={`rounded-full px-2 py-0.5 font-medium ${
@@ -853,7 +895,7 @@ function AnalyticsTab() {
         </ChartCard>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <div className="glass-card p-5">
         <h3 className="mb-3 text-sm font-medium">Top posts by engagement</h3>
         <ol className="space-y-3">
           {top.map((p, i) => {
@@ -893,7 +935,7 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <h3 className="mb-3 text-sm font-medium">{title}</h3>
       {children}
     </div>

@@ -34,16 +34,22 @@ export function analyzePost(text: string): ScoreResult {
     paragraphs.reduce((a, p) => a + p.length, 0) / Math.max(paragraphs.length, 1);
   const readOk = blankLineCount >= 2 && avgParaLen < 240 && trimmed.length >= 200;
 
-  const lastPara = paragraphs[paragraphs.length - 1] ?? "";
-  const bodyForCta = lastPara.replace(/#[\w]+/g, "").trim();
-  const ctaOk = /\?\s*$|\?\s*\n/.test(bodyForCta) || /what do you think|your take|thoughts\??$|drop a|comment below|share your/i.test(bodyForCta);
+  // Dynamic CTA detection: scan the WHOLE post (hashtags stripped) for a question
+  // mark or any common engagement phrase — not just the closing paragraph.
+  const body = trimmed.replace(/#[\w]+/g, " ");
+  const lastPara = (paragraphs[paragraphs.length - 1] ?? "").replace(/#[\w]+/g, "").trim();
+  const CTA_RE =
+    /\?|what do you think|your take|thoughts|drop a|comment below|share your|let me know|tell me|agree\b|curious|dm me|follow (me|for)|save this|repost|tag someone|who else|how do you|what would you/i;
+  const ctaOk = CTA_RE.test(body);
+  const ctaAtEnd = /\?\s*$/.test(lastPara) || CTA_RE.test(lastPara);
 
   let score = 0;
   score += hookOk ? 40 : Math.min(25, Math.round((firstLen / 140) * 25));
-  score += readOk ? 35 : blankLineCount >= 1 ? 18 : 8;
-  score += ctaOk ? 25 : 5;
-  if (/#\w+/.test(trimmed)) score += 0; // hashtags handled separately
-  score = Math.max(5, Math.min(99, score));
+  score += readOk ? 30 : blankLineCount >= 1 ? 16 : 6;
+  score += ctaOk ? (ctaAtEnd ? 22 : 14) : 2;
+  if (/#\w+/.test(trimmed)) score += 8; // 3–4 hashtags help discovery
+  score = Math.max(3, Math.min(99, score));
+
 
   let tip = "Nice work — try A/B testing two hooks to squeeze out more reach.";
   if (!hookOk) tip = "Rewrite the first line — aim for a bold, specific hook under 140 chars with a number or question.";
@@ -86,9 +92,9 @@ export function ViralScoreCard({ text }: { text: string }) {
   const dash = (score / 100) * c;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium">Viral Score Predictor</h2>
+        <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25">Viral Score Predictor</h2>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
           AI Analysis
         </span>
@@ -289,9 +295,9 @@ export function HashtagOptimizer({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium">Hashtag Optimizer</h2>
+        <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25">Hashtag Optimizer</h2>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
           {suggestions.length} suggestions
         </span>
@@ -301,7 +307,7 @@ export function HashtagOptimizer({
         {suggestions.map((s) => (
           <div
             key={s.tag}
-            className="rounded-lg border border-border bg-background p-3 text-center"
+            className="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3 text-center"
           >
             <div className="text-sm font-semibold text-foreground">{s.tag}</div>
             <div

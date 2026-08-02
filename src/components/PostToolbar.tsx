@@ -92,8 +92,10 @@ function ToolButton({
       type="button"
       onClick={onClick}
       title={title}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors ${
-        active ? "border-primary bg-primary/10 text-primary" : "border-input bg-background/60 text-foreground hover:bg-accent"
+      className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-all active:scale-95 ${
+        active
+          ? "border-indigo-500/60 bg-indigo-500/20 text-indigo-300 ring-2 ring-indigo-500/30"
+          : "border-slate-700/50 bg-slate-800/40 text-foreground hover:border-indigo-500/40 hover:bg-slate-800/70"
       }`}
     >
       {children}
@@ -145,7 +147,7 @@ export function PostToolbar({
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-background/40 p-1.5">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-2">
         <ToolButton title="Add emoji" active={open === "emoji"} onClick={() => setOpen(open === "emoji" ? null : "emoji")}>
           <Smile className="h-4 w-4" />
         </ToolButton>

@@ -7,7 +7,7 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — LinkedIn Post Studio" },
+      { title: "Sign in — LN Post Studio" },
       { name: "description", content: "Sign in to draft, publish, and track your LinkedIn posts." },
     ],
   }),
@@ -78,7 +78,7 @@ function AuthPage() {
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">LinkedIn Post Studio</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">LN Post Studio</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Draft, publish, and track your LinkedIn posts in one place.
           </p>

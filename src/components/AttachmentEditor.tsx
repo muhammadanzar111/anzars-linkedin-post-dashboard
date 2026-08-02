@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X, Pencil, Copy, Trash2, Plus, Upload, Crop, Check, Undo2 } from "lucide-react";
+import {
+  X,
+  Pencil,
+  Copy,
+  Trash2,
+  Plus,
+  Upload,
+  Crop,
+  Check,
+  Undo2,
+  RotateCw,
+  UserPlus,
+} from "lucide-react";
+
 import type { MediaAttachment } from "./PostToolbar";
 
 const PEN_COLORS = ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6", "#a855f7", "#ffffff", "#000000"];
@@ -24,8 +37,12 @@ export function AttachmentEditor({
   const [items, setItems] = useState<MediaAttachment[]>(initialMedia);
   const [activeId, setActiveId] = useState<string | null>(initialMedia[0]?.id ?? null);
   const [altMap, setAltMap] = useState<Record<string, string>>({});
+  const [tagMap, setTagMap] = useState<Record<string, string[]>>({});
+  const [tagDraft, setTagDraft] = useState("");
+  const [taggingOpen, setTaggingOpen] = useState(false);
   const [editingAlt, setEditingAlt] = useState(false);
   const [tool, setTool] = useState<Tool>("none");
+
   const [penColor, setPenColor] = useState(PEN_COLORS[0]);
   const [dirty, setDirty] = useState(false);
   const [cropRect, setCropRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -147,7 +164,21 @@ export function AttachmentEditor({
     await commitCanvas(out);
   }
 
+  async function rotateActive() {
+    const canvas = canvasRef.current;
+    if (!canvas || !active || active.kind !== "image") return;
+    const out = document.createElement("canvas");
+    out.width = canvas.height;
+    out.height = canvas.width;
+    const ctx = out.getContext("2d")!;
+    ctx.translate(out.width / 2, out.height / 2);
+    ctx.rotate(Math.PI / 2);
+    ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+    await commitCanvas(out);
+  }
+
   function resetActive() {
+
     // Re-draw from the original URL by nudging the effect.
     const cur = active;
     if (!cur) return;
@@ -238,7 +269,7 @@ export function AttachmentEditor({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 text-neutral-100 shadow-2xl">
+      <div className="flex max-h-[92vh] w-full max-w-5xl animate-fade-in-up flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 text-neutral-100 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-neutral-800 px-5 py-3">
           <h3 className="text-base font-semibold">Editor</h3>
@@ -319,7 +350,7 @@ export function AttachmentEditor({
               </div>
 
               {/* Action row */}
-              <div className="flex flex-wrap items-center gap-4 border-t border-neutral-800 bg-neutral-950 px-6 py-3 text-sm">
+              <div className="flex flex-wrap items-center justify-center gap-4 border-t border-neutral-800 bg-neutral-950 px-6 py-3 text-sm">
                 <button
                   type="button"
                   disabled={!active || active.kind !== "image"}
@@ -350,7 +381,35 @@ export function AttachmentEditor({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEditingAlt((v) => !v)}
+                  disabled={!active || active.kind !== "image"}
+                  onClick={rotateActive}
+                  title="Rotate 90°"
+                  className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-neutral-300 transition-colors hover:text-white disabled:opacity-40"
+                >
+                  <RotateCw className="h-4 w-4" />
+                  Rotate
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTaggingOpen((v) => !v);
+                    setEditingAlt(false);
+                  }}
+                  className={`inline-flex items-center gap-2 rounded-full px-2 py-1 transition-colors ${
+                    taggingOpen || (active && (tagMap[active.id] ?? []).length > 0)
+                      ? "bg-blue-600 text-white"
+                      : "text-neutral-300 hover:text-white"
+                  }`}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Tag
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingAlt((v) => !v);
+                    setTaggingOpen(false);
+                  }}
                   className={`inline-flex items-center gap-2 rounded border px-2 py-0.5 text-xs font-bold tracking-wide transition-colors ${
                     activeAlt
                       ? "border-blue-500 text-blue-300"
@@ -359,6 +418,7 @@ export function AttachmentEditor({
                 >
                   ALT
                 </button>
+
 
                 {tool === "pen" && (
                   <div className="ml-auto flex items-center gap-2">
@@ -415,6 +475,59 @@ export function AttachmentEditor({
                 )}
               </div>
 
+              {taggingOpen && active && (
+                <div className="border-t border-neutral-800 bg-neutral-950 px-6 py-3">
+                  <label className="mb-1 block text-xs font-medium text-neutral-400">
+                    Tag people or pages in this image
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      value={tagDraft}
+                      onChange={(e) => setTagDraft(e.target.value)}
+                      placeholder="e.g. @Jane Doe or Acme Inc."
+                      className="flex-1 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const v = tagDraft.trim();
+                        if (!v) return;
+                        setTagMap((m) => ({ ...m, [active.id]: [...(m[active.id] ?? []), v] }));
+                        setTagDraft("");
+                      }}
+                      className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+                    >
+                      Add tag
+                    </button>
+                  </div>
+                  {(tagMap[active.id] ?? []).length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {(tagMap[active.id] ?? []).map((t, i) => (
+                        <span
+                          key={`${t}-${i}`}
+                          className="inline-flex items-center gap-1 rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-200"
+                        >
+                          {t}
+                          <button
+                            type="button"
+                            aria-label={`Remove ${t}`}
+                            onClick={() =>
+                              setTagMap((m) => ({
+                                ...m,
+                                [active.id]: (m[active.id] ?? []).filter((_, j) => j !== i),
+                              }))
+                            }
+                            className="text-blue-300 hover:text-white"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {editingAlt && active && (
                 <div className="border-t border-neutral-800 bg-neutral-950 px-6 py-3">
                   <label className="mb-1 block text-xs font-medium text-neutral-400">
@@ -429,6 +542,7 @@ export function AttachmentEditor({
                   />
                 </div>
               )}
+
             </div>
 
             {/* RIGHT — sidebar */}
@@ -504,6 +618,43 @@ export function AttachmentEditor({
             </aside>
           </div>
         )}
+
+        {items.length > 0 && (
+          <div className="flex items-center justify-end gap-2 border-t border-neutral-800 px-5 py-3">
+            <button
+              type="button"
+              onClick={() => {
+                const idx = items.findIndex((i) => i.id === activeId);
+                if (idx > 0) setActiveId(items[idx - 1]!.id);
+              }}
+              disabled={items.findIndex((i) => i.id === activeId) <= 0}
+              className="rounded-full border border-neutral-700 px-4 py-1.5 text-sm font-medium text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white disabled:opacity-40"
+            >
+              Back
+            </button>
+            {items.findIndex((i) => i.id === activeId) < items.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const idx = items.findIndex((i) => i.id === activeId);
+                  setActiveId(items[idx + 1]!.id);
+                }}
+                className="rounded-full bg-blue-600 px-5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={done}
+                className="rounded-full bg-blue-600 px-5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
+              >
+                Done
+              </button>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );

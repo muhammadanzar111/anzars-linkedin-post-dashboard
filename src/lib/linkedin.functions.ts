@@ -86,20 +86,32 @@ async function registerAndUpload(
     throw new Error("LinkedIn registerUpload did not return an asset/uploadUrl");
   }
 
-  // Step 2: upload binary via gateway (so OAuth is injected)
+  // Step 2: upload the RAW binary with PUT. No multipart, no boundary headers.
   const buffer = base64ToBuffer(media.dataBase64);
-  const uploadRes = await fetch(toGatewayUrl(uploadUrl), {
+  const contentType = media.mimeType || "application/octet-stream";
+
+  // LinkedIn's uploadUrl is pre-signed: a direct PUT with only Content-Type works and
+  // avoids the Nginx 405 that the proxied path can produce. Fall back to the gateway
+  // (which injects OAuth) if the direct attempt is rejected.
+  let uploadRes = await fetch(uploadUrl, {
     method: "PUT",
-    headers: {
-      ...headers,
-      "Content-Type": media.mimeType || "application/octet-stream",
-    },
+    headers: { "Content-Type": contentType },
     body: buffer,
   });
+
+  if (!uploadRes.ok && [401, 403, 405].includes(uploadRes.status)) {
+    uploadRes = await fetch(toGatewayUrl(uploadUrl), {
+      method: "PUT",
+      headers: { ...headers, "Content-Type": contentType },
+      body: buffer,
+    });
+  }
+
   if (!uploadRes.ok) {
     const body = await uploadRes.text();
     throw new Error(`LinkedIn media upload failed [${uploadRes.status}]: ${body}`);
   }
+
 
   return asset;
 }

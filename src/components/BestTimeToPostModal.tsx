@@ -148,7 +148,7 @@ export function BestTimeToPostModal({
         onClick={onClose}
         className="absolute inset-0 z-0 bg-black/60 backdrop-blur-md"
       />
-      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border/60 bg-card text-card-foreground shadow-2xl backdrop-blur-2xl">
+      <div className="relative z-10 w-full max-w-lg overflow-hidden animate-fade-in-up rounded-2xl border border-border/60 bg-card text-card-foreground shadow-2xl backdrop-blur-2xl">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
         <div className="relative flex items-start justify-between border-b border-border/60 px-6 py-4">
           <div className="flex items-center gap-2">
