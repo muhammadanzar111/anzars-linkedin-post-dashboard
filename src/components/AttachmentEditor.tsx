@@ -504,6 +504,43 @@ export function AttachmentEditor({
             </aside>
           </div>
         )}
+
+        {items.length > 0 && (
+          <div className="flex items-center justify-end gap-2 border-t border-neutral-800 px-5 py-3">
+            <button
+              type="button"
+              onClick={() => {
+                const idx = items.findIndex((i) => i.id === activeId);
+                if (idx > 0) setActiveId(items[idx - 1]!.id);
+              }}
+              disabled={items.findIndex((i) => i.id === activeId) <= 0}
+              className="rounded-full border border-neutral-700 px-4 py-1.5 text-sm font-medium text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white disabled:opacity-40"
+            >
+              Back
+            </button>
+            {items.findIndex((i) => i.id === activeId) < items.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const idx = items.findIndex((i) => i.id === activeId);
+                  setActiveId(items[idx + 1]!.id);
+                }}
+                className="rounded-full bg-blue-600 px-5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={done}
+                className="rounded-full bg-blue-600 px-5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
+              >
+                Done
+              </button>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
