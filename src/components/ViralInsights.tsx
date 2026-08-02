@@ -94,7 +94,7 @@ export function ViralScoreCard({ text }: { text: string }) {
   return (
     <div className="glass-card p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium">Viral Score Predictor</h2>
+        <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25">Viral Score Predictor</h2>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
           AI Analysis
         </span>
@@ -297,7 +297,7 @@ export function HashtagOptimizer({
   return (
     <div className="glass-card p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium">Hashtag Optimizer</h2>
+        <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25">Hashtag Optimizer</h2>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
           {suggestions.length} suggestions
         </span>
@@ -307,7 +307,7 @@ export function HashtagOptimizer({
         {suggestions.map((s) => (
           <div
             key={s.tag}
-            className="rounded-lg border border-border bg-background p-3 text-center"
+            className="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3 text-center"
           >
             <div className="text-sm font-semibold text-foreground">{s.tag}</div>
             <div

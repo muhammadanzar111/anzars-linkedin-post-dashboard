@@ -508,7 +508,7 @@ const AiWriterSidebar = memo(function AiWriterSidebar({
     <aside className="lg:col-span-2">
       <div className="glass-card sticky top-6 p-5">
         <div className="mb-4">
-          <h2 className="text-base font-semibold tracking-tight">AI Post Generator ✨</h2>
+          <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25 text-base">AI Post Generator ✨</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Turn raw notes into a scroll-stopping LinkedIn post.
           </p>
