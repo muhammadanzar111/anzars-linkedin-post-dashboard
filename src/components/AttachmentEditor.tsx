@@ -269,7 +269,7 @@ export function AttachmentEditor({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 text-neutral-100 shadow-2xl">
+      <div className="flex max-h-[92vh] w-full max-w-5xl animate-fade-in-up flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 text-neutral-100 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-neutral-800 px-5 py-3">
           <h3 className="text-base font-semibold">Editor</h3>
