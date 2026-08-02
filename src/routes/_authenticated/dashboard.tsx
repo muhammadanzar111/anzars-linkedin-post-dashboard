@@ -281,7 +281,7 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
               onChange={(e) => setText(e.target.value)}
               placeholder="What do you want to share?"
               rows={12}
-              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="w-full resize-y rounded-xl border border-slate-700/50 bg-slate-900/80 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/50"
             />
             <AttachmentStrip
               media={media}
@@ -298,20 +298,20 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
               <button
                 onClick={() => publishMutation.mutate({ text: trimmed, draftId: draftId ?? undefined, media })}
                 disabled={!canPublish}
-                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5 hover:shadow-indigo-500/40 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
                 {publishMutation.isPending ? "Publishing…" : "Publish to LinkedIn"}
               </button>
               <button
                 onClick={() => saveMutation.mutate({ id: draftId ?? undefined, content: text })}
                 disabled={!trimmed || saveMutation.isPending}
-                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/30 px-4 py-2 text-sm font-medium text-foreground transition-all hover:border-indigo-500/50 hover:bg-slate-800/60 active:scale-95 disabled:opacity-50"
               >
                 {saveMutation.isPending ? "Saving…" : draftId ? "Update draft" : "Save draft"}
               </button>
               <button
                 onClick={newDraft}
-                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/30 px-4 py-2 text-sm font-medium text-foreground transition-all hover:border-indigo-500/50 hover:bg-slate-800/60 active:scale-95"
               >
                 New
               </button>
@@ -470,7 +470,7 @@ const AiWriterSidebar = memo(function AiWriterSidebar({
 
   return (
     <aside className="lg:col-span-2">
-      <div className="sticky top-6 rounded-xl border border-border bg-gradient-to-b from-card to-card/60 p-5 shadow-sm">
+      <div className="glass-card sticky top-6 p-5">
         <div className="mb-4">
           <h2 className="text-base font-semibold tracking-tight">AI Post Generator ✨</h2>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -513,14 +513,14 @@ const AiWriterSidebar = memo(function AiWriterSidebar({
           onChange={(e) => setDetails(e.target.value)}
           rows={6}
           placeholder="e.g., I just finished an unemployment data analysis project using Python. We used linear regression to predict trends..."
-          className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className="w-full resize-y rounded-xl border border-slate-700/50 bg-slate-900/80 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/50"
         />
 
         <div className="mt-4 flex gap-2">
           <button
             onClick={() => genMutation.mutate({ details: details.trim(), toneLevel })}
             disabled={!canGen}
-            className="inline-flex flex-1 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5 hover:shadow-indigo-500/40 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {genMutation.isPending ? "Generating…" : "Generate Post 🚀"}
           </button>
