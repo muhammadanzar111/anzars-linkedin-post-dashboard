@@ -80,12 +80,18 @@ function Dashboard() {
     navigate({ to: "/auth" });
   }
 
-  const isDark = bgTheme === "aurora" || bgTheme === "grid" || bgTheme === "sunset";
-
+  // The studio always renders on a deep dark base; the picker only swaps the
+  // animated background layer on top of it.
   return (
-    <div className={`${isDark ? "dark" : ""} relative min-h-screen text-foreground ${bgTheme === "plain" ? "bg-background" : ""}`}>
+    <div className="dark relative min-h-screen overflow-x-hidden bg-slate-950 text-foreground">
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="glow-sphere -left-24 -top-32 h-96 w-96 bg-indigo-600/40" />
+        <div className="glow-sphere -right-24 top-24 h-80 w-80 bg-violet-600/30" />
+        <div className="glow-sphere bottom-0 left-1/3 h-72 w-72 bg-blue-600/25" />
+      </div>
       <AnimatedBackground theme={bgTheme} />
-      <header className="border-b border-border/60 bg-card/70 backdrop-blur-xl">
+      <header className="relative border-b border-slate-800/60 bg-slate-900/50 backdrop-blur-xl">
+
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-foreground">LN Post Studio</h1>
