@@ -415,6 +415,59 @@ export function AttachmentEditor({
                 )}
               </div>
 
+              {taggingOpen && active && (
+                <div className="border-t border-neutral-800 bg-neutral-950 px-6 py-3">
+                  <label className="mb-1 block text-xs font-medium text-neutral-400">
+                    Tag people or pages in this image
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      value={tagDraft}
+                      onChange={(e) => setTagDraft(e.target.value)}
+                      placeholder="e.g. @Jane Doe or Acme Inc."
+                      className="flex-1 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const v = tagDraft.trim();
+                        if (!v) return;
+                        setTagMap((m) => ({ ...m, [active.id]: [...(m[active.id] ?? []), v] }));
+                        setTagDraft("");
+                      }}
+                      className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+                    >
+                      Add tag
+                    </button>
+                  </div>
+                  {(tagMap[active.id] ?? []).length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {(tagMap[active.id] ?? []).map((t, i) => (
+                        <span
+                          key={`${t}-${i}`}
+                          className="inline-flex items-center gap-1 rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-200"
+                        >
+                          {t}
+                          <button
+                            type="button"
+                            aria-label={`Remove ${t}`}
+                            onClick={() =>
+                              setTagMap((m) => ({
+                                ...m,
+                                [active.id]: (m[active.id] ?? []).filter((_, j) => j !== i),
+                              }))
+                            }
+                            className="text-blue-300 hover:text-white"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {editingAlt && active && (
                 <div className="border-t border-neutral-800 bg-neutral-950 px-6 py-3">
                   <label className="mb-1 block text-xs font-medium text-neutral-400">
@@ -429,6 +482,7 @@ export function AttachmentEditor({
                   />
                 </div>
               )}
+
             </div>
 
             {/* RIGHT — sidebar */}
