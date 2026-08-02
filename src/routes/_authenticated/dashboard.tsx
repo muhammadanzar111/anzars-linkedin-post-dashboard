@@ -31,7 +31,7 @@ import {
 import { AttachmentEditor } from "@/components/AttachmentEditor";
 
 
-import { Clock, User } from "lucide-react";
+import { Clock, User, Pencil, Trash2 } from "lucide-react";
 
 const TONE_STEPS = [
   "Highly Casual",
@@ -172,6 +172,21 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
 
   const save = useServerFn(saveDraft);
   const publish = useServerFn(publishLinkedInPost);
+  const removePost = useServerFn(deletePost);
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => removePost({ data: { id } }),
+    onSuccess: (_res, id) => {
+      if (draftId === id) {
+        setDraftId(null);
+        setText("");
+      }
+      setFlash({ kind: "ok", message: "Draft deleted." });
+      qc.invalidateQueries({ queryKey: ["posts"] });
+    },
+    onError: (e) =>
+      setFlash({ kind: "err", message: e instanceof Error ? e.message : "Delete failed" }),
+  });
 
   const saveMutation = useMutation({
     mutationFn: (vars: { id?: string; content: string }) => save({ data: vars }),
