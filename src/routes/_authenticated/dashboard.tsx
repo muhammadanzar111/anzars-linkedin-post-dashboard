@@ -582,7 +582,7 @@ const AiWriterSidebar = memo(function AiWriterSidebar({
     <aside className="lg:col-span-2">
       <div className="glass-card sticky top-6 p-5">
         <div className="mb-4">
-          <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25 text-base">AI Post Generator ✨</h2>
+          <h2 className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary ring-1 ring-primary/25 text-base">AI Post Generator ✨</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Turn raw notes into a scroll-stopping LinkedIn post.
           </p>
@@ -623,7 +623,7 @@ const AiWriterSidebar = memo(function AiWriterSidebar({
           onChange={(e) => setDetails(e.target.value)}
           rows={6}
           placeholder="e.g., I just finished an unemployment data analysis project using Python. We used linear regression to predict trends..."
-          className="w-full resize-y rounded-xl border border-slate-700/50 bg-slate-900/80 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/50"
+          className="w-full resize-y rounded-xl border border-input bg-background/70 px-3 py-2 text-sm outline-none transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/40"
         />
 
         <div className="mt-4 flex gap-2">

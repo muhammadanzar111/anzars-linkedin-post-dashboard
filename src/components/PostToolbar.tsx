@@ -95,7 +95,7 @@ function ToolButton({
       className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-all active:scale-95 ${
         active
           ? "border-indigo-500/60 bg-indigo-500/20 text-indigo-300 ring-2 ring-indigo-500/30"
-          : "border-slate-700/50 bg-slate-800/40 text-foreground hover:border-indigo-500/40 hover:bg-slate-800/70"
+          : "border-border bg-secondary/50 text-foreground hover:border-primary/40 hover:bg-secondary"
       }`}
     >
       {children}
@@ -147,7 +147,7 @@ export function PostToolbar({
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-secondary/40 p-2">
         <ToolButton title="Add emoji" active={open === "emoji"} onClick={() => setOpen(open === "emoji" ? null : "emoji")}>
           <Smile className="h-4 w-4" />
         </ToolButton>
@@ -341,7 +341,7 @@ function Modal({
   children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-5 text-card-foreground shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-sm font-semibold">{title}</h3>

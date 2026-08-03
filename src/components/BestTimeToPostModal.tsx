@@ -146,9 +146,9 @@ export function BestTimeToPostModal({
       <button
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 z-0 bg-black/60 backdrop-blur-md"
+        className="absolute inset-0 z-0 bg-black/70"
       />
-      <div className="relative z-10 w-full max-w-lg overflow-hidden animate-fade-in-up rounded-2xl border border-border/60 bg-card text-card-foreground shadow-2xl backdrop-blur-2xl">
+      <div className="relative z-10 w-full max-w-lg overflow-hidden animate-fade-in-up rounded-2xl border border-border/60 bg-card text-card-foreground shadow-2xl">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
         <div className="relative flex items-start justify-between border-b border-border/60 px-6 py-4">
           <div className="flex items-center gap-2">
@@ -210,7 +210,7 @@ export function BestTimeToPostModal({
           </button>
 
           {result && (
-            <div className="rounded-xl border border-border/60 bg-background/60 p-4 shadow-inner backdrop-blur">
+            <div className="rounded-xl border border-border/60 bg-background/60 p-4 shadow-inner">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                   <CalendarDays className="h-3.5 w-3.5" />
