@@ -362,13 +362,13 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
               <button
                 onClick={() => saveMutation.mutate({ id: draftId ?? undefined, content: text })}
                 disabled={!trimmed || saveMutation.isPending}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/30 px-4 py-2 text-sm font-medium text-foreground transition-all hover:border-indigo-500/50 hover:bg-slate-800/60 active:scale-95 disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-secondary active:scale-95 disabled:opacity-50"
               >
                 {saveMutation.isPending ? "Saving…" : draftId ? "Update draft" : "Save draft"}
               </button>
               <button
                 onClick={newDraft}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/30 px-4 py-2 text-sm font-medium text-foreground transition-all hover:border-indigo-500/50 hover:bg-slate-800/60 active:scale-95"
+                className="inline-flex items-center justify-center rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-secondary active:scale-95"
               >
                 New
               </button>
@@ -393,132 +393,33 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             )}
           </div>
 
-          <div className="mt-6 glass-card p-5">
-            <h2 className="mb-3 text-sm font-medium">Preview</h2>
-            <div className={`rounded-lg border border-border p-4 ${bgTemplate.className} ${bgTemplate.textClass}`}>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/10 ring-1 ring-black/10">
-                  <User className="h-5 w-5 opacity-70" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold">You</div>
-                  <div className="text-xs opacity-80">Just now · 🌐</div>
-                </div>
-              </div>
-              <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
-                {trimmed ? trimmed : <span className="opacity-70">Your post will appear here…</span>}
-              </div>
-              {media.length > 0 && (
-                <div className={`mt-3 grid gap-2 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-                  {media.map((m) =>
-                    m.kind === "image" ? (
-                      <img
-                        key={m.id}
-                        src={m.url}
-                        alt={m.name}
-                        className="max-h-80 w-full rounded-md bg-black/5 object-contain"
-                      />
-                    ) : (
-                      <video
-                        key={m.id}
-                        src={m.url}
-                        controls
-                        className="max-h-80 w-full rounded-md bg-black/5 object-contain"
-                      />
-                    ),
-                  )}
-                </div>
-              )}
+          <PreviewCard text={trimmed} media={media} docs={docs} bgTemplate={bgTemplate} />
 
-              {docs.length > 0 && (
-                <div className="mt-3 space-y-1">
-                  {docs.map((d) => (
-                    <div key={d.id} className="rounded-md bg-black/10 px-3 py-2 text-xs">
-                      📄 {d.name} <span className="opacity-70">· {d.sizeKb} KB</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          <div className="mt-6">
+            <ViralScoreCard text={debouncedText} />
           </div>
 
           <div className="mt-6">
-            <ViralScoreCard text={text} />
+            <HashtagOptimizer text={debouncedText} onInsert={insertHashtags} />
           </div>
 
-          <div className="mt-6">
-            <HashtagOptimizer
-              text={text}
-              onInsert={(tags) => {
-                setText((prev) => {
-                  const base = prev.replace(/\s+$/, "");
-                  // Remove any trailing hashtag-only line to avoid duplicates
-                  const withoutTrailingTags = base.replace(/\n[ \t]*(#[\w]+(\s+#[\w]+)*)\s*$/, "");
-                  return `${withoutTrailingTags}\n\n${tags}`;
-                });
-                setFlash({ kind: "ok", message: "Hashtags inserted into your post." });
-              }}
-            />
-          </div>
-
-          <div className="mt-6 glass-card p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-200 ring-1 ring-indigo-500/25">
-                Drafts Quick Manager
-              </h2>
-              <span className="text-xs text-muted-foreground">{drafts.length}</span>
-            </div>
-            {drafts.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No drafts yet.</p>
-            ) : (
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {drafts.map((d) => (
-                  <li
-                    key={d.id}
-                    className={`flex items-start gap-2 rounded-xl border p-2 text-xs transition-colors ${
-                      draftId === d.id
-                        ? "border-indigo-500/60 bg-indigo-500/10"
-                        : "border-slate-700/50 hover:border-indigo-500/40 hover:bg-slate-800/40"
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="line-clamp-2 text-foreground">{d.content || "(empty)"}</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">
-                        {new Date(d.updated_at).toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 flex-col gap-1">
-                      <button
-                        onClick={() => loadDraft(d)}
-                        title="Edit draft"
-                        className="rounded-lg border border-slate-700/60 p-1.5 text-muted-foreground transition-colors hover:border-indigo-500/50 hover:text-foreground"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => deleteMutation.mutate(d.id)}
-                        disabled={deleteMutation.isPending}
-                        title="Delete draft"
-                        className="rounded-lg border border-slate-700/60 p-1.5 text-muted-foreground transition-colors hover:border-rose-500/50 hover:text-rose-400 disabled:opacity-40"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <DraftsManager
+            drafts={drafts}
+            activeId={draftId}
+            deleting={deleteMutation.isPending}
+            onEdit={loadDraft}
+            onDelete={deleteDraft}
+          />
 
         </section>
       </div>
 
-      <BestTimeToPostModal open={timeModalOpen} onClose={() => setTimeModalOpen(false)} />
+      <BestTimeToPostModal open={timeModalOpen} onClose={closeTimeModal} />
       <AttachmentEditor
         open={attachmentsOpen}
         initialMedia={media}
-        onClose={() => setAttachmentsOpen(false)}
-        onDone={(next) => setMedia(next)}
+        onClose={closeAttachments}
+        onDone={applyMedia}
       />
 
     </>
