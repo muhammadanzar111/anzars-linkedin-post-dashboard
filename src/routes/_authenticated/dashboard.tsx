@@ -324,27 +324,27 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
             <div className="mb-2">
               <PostToolbar
                 insertText={insertAtCursor}
-                onAddMedia={(m) => setMedia((prev) => [...prev, m])}
-                onAddDoc={(d) => setDocs((prev) => [...prev, d])}
+                onAddMedia={addMedia}
+                onAddDoc={addDoc}
                 bgId={bgId}
                 onChangeBg={setBgId}
-                onOpenAttachments={() => setAttachmentsOpen(true)}
+                onOpenAttachments={openAttachments}
               />
 
             </div>
             <textarea
               ref={textareaRef}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={handleTextChange}
               placeholder="What do you want to share?"
               rows={12}
-              className="w-full resize-y rounded-xl border border-slate-700/50 bg-slate-900/80 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/50"
+              className="w-full resize-y rounded-xl border border-input bg-background/70 px-3 py-2 text-sm outline-none transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/40"
             />
             <AttachmentStrip
               media={media}
               docs={docs}
-              onRemoveMedia={(id) => setMedia((prev) => prev.filter((m) => m.id !== id))}
-              onRemoveDoc={(id) => setDocs((prev) => prev.filter((d) => d.id !== id))}
+              onRemoveMedia={removeMedia}
+              onRemoveDoc={removeDoc}
             />
             {(media.length > 0 || docs.length > 0) && (
               <p className="mt-2 text-[10px] text-muted-foreground">
