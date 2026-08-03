@@ -18,7 +18,7 @@ import { listPosts, saveDraft, deletePost, updateMetrics } from "@/lib/posts.fun
 import { publishLinkedInPost } from "@/lib/linkedin.functions";
 import { generateLinkedInPost } from "@/lib/ai-writer.functions";
 import type { Tables } from "@/integrations/supabase/types";
-import { AnimatedBackground, BgThemePicker, useBgTheme } from "@/components/AnimatedBackground";
+import { ThemeBackdrop, ThemePicker, useColorTheme } from "@/components/ThemeSwitcher";
 import { BestTimeToPostModal } from "@/components/BestTimeToPostModal";
 import { ViralScoreCard, HashtagOptimizer } from "@/components/ViralInsights";
 import {
