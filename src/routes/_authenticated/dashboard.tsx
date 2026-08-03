@@ -129,6 +129,16 @@ function Dashboard() {
   );
 }
 
+// Small debounce so per-keystroke re-analysis doesn't stutter the UI.
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+
 // ---------- Compose ----------
 function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   const qc = useQueryClient();
