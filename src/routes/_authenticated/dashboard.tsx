@@ -109,7 +109,7 @@ function Dashboard() {
               onClick={() => setTab(t)}
               className={`border-b-2 px-3 py-2 text-sm font-medium capitalize transition-all ${
                 tab === t
-                  ? "border-indigo-400 text-foreground"
+                  ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
