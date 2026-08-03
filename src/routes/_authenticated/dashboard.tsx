@@ -133,7 +133,7 @@ function Dashboard() {
 function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   const qc = useQueryClient();
   const { data: posts } = useSuspenseQuery(postsQuery());
-  const drafts = posts.filter((p) => p.status === "draft");
+  const drafts = useMemo(() => posts.filter((p) => p.status === "draft"), [posts]);
 
   const [draftId, setDraftId] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -145,25 +145,49 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Analysis-heavy cards read the debounced text so typing stays smooth.
+  const debouncedText = useDebouncedValue(text, 250);
 
-  const bgTemplate = BG_TEMPLATES.find((t) => t.id === bgId) ?? BG_TEMPLATES[0];
+  const bgTemplate = useMemo(
+    () => BG_TEMPLATES.find((t) => t.id === bgId) ?? BG_TEMPLATES[0],
+    [bgId],
+  );
 
-  function insertAtCursor(snippet: string) {
+  const handleTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value),
+    [],
+  );
+
+  const insertAtCursor = useCallback((snippet: string) => {
     const ta = textareaRef.current;
     if (!ta) {
       setText((prev) => prev + snippet);
       return;
     }
-    const start = ta.selectionStart ?? text.length;
-    const end = ta.selectionEnd ?? text.length;
-    const next = text.slice(0, start) + snippet + text.slice(end);
-    setText(next);
+    const start = ta.selectionStart ?? 0;
+    const end = ta.selectionEnd ?? 0;
+    setText((prev) => prev.slice(0, start) + snippet + prev.slice(end));
     requestAnimationFrame(() => {
       ta.focus();
       const pos = start + snippet.length;
       ta.setSelectionRange(pos, pos);
     });
-  }
+  }, []);
+
+  const addMedia = useCallback((m: MediaAttachment) => setMedia((prev) => [...prev, m]), []);
+  const addDoc = useCallback((d: DocAttachment) => setDocs((prev) => [...prev, d]), []);
+  const removeMedia = useCallback(
+    (id: string) => setMedia((prev) => prev.filter((m) => m.id !== id)),
+    [],
+  );
+  const removeDoc = useCallback(
+    (id: string) => setDocs((prev) => prev.filter((d) => d.id !== id)),
+    [],
+  );
+  const openAttachments = useCallback(() => setAttachmentsOpen(true), []);
+  const closeAttachments = useCallback(() => setAttachmentsOpen(false), []);
+  const closeTimeModal = useCallback(() => setTimeModalOpen(false), []);
+  const applyMedia = useCallback((next: MediaAttachment[]) => setMedia(next), []);
 
   const save = useServerFn(saveDraft);
   const publish = useServerFn(publishLinkedInPost);
