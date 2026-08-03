@@ -307,7 +307,7 @@ export function HashtagOptimizer({
         {suggestions.map((s) => (
           <div
             key={s.tag}
-            className="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3 text-center"
+            className="rounded-xl border border-border bg-secondary/50 p-3 text-center"
           >
             <div className="text-sm font-semibold text-foreground">{s.tag}</div>
             <div
