@@ -272,16 +272,29 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
     !publishMutation.isPending;
 
 
-  function loadDraft(d: Post) {
+  const loadDraft = useCallback((d: Post) => {
     setDraftId(d.id);
     setText(d.content);
     setFlash(null);
-  }
-  function newDraft() {
+  }, []);
+  const newDraft = useCallback(() => {
     setDraftId(null);
     setText("");
     setFlash(null);
-  }
+  }, []);
+  const deleteDraft = useCallback(
+    (id: string) => deleteMutation.mutate(id),
+    [deleteMutation],
+  );
+  const insertHashtags = useCallback((tags: string) => {
+    setText((prev) => {
+      const base = prev.replace(/\s+$/, "");
+      // Remove any trailing hashtag-only line to avoid duplicates
+      const withoutTrailingTags = base.replace(/\n[ \t]*(#[\w]+(\s+#[\w]+)*)\s*$/, "");
+      return `${withoutTrailingTags}\n\n${tags}`;
+    });
+    setFlash({ kind: "ok", message: "Hashtags inserted into your post." });
+  }, []);
 
   // Stable callbacks so the memoized AI sidebar doesn't re-render while typing.
   const handleUseAiText = useCallback((t: string) => {
