@@ -426,6 +426,137 @@ function ComposeTab({ onGoHistory }: { onGoHistory: () => void }) {
   );
 }
 
+// ---------- Live preview (memoized: only re-renders when its own props change) ----------
+const PreviewCard = memo(function PreviewCard({
+  text,
+  media,
+  docs,
+  bgTemplate,
+}: {
+  text: string;
+  media: MediaAttachment[];
+  docs: DocAttachment[];
+  bgTemplate: (typeof BG_TEMPLATES)[number];
+}) {
+  return (
+    <div className="mt-6 glass-card p-5">
+      <h2 className="mb-3 text-sm font-medium">Preview</h2>
+      <div className={`rounded-lg border border-border p-4 ${bgTemplate.className} ${bgTemplate.textClass}`}>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/10 ring-1 ring-black/10">
+            <User className="h-5 w-5 opacity-70" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold">You</div>
+            <div className="text-xs opacity-80">Just now · 🌐</div>
+          </div>
+        </div>
+        <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
+          {text ? text : <span className="opacity-70">Your post will appear here…</span>}
+        </div>
+        {media.length > 0 && (
+          <div className={`mt-3 grid gap-2 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+            {media.map((m) =>
+              m.kind === "image" ? (
+                <img
+                  key={m.id}
+                  src={m.url}
+                  alt={m.name}
+                  className="max-h-80 w-full rounded-md bg-black/5 object-contain"
+                />
+              ) : (
+                <video
+                  key={m.id}
+                  src={m.url}
+                  controls
+                  className="max-h-80 w-full rounded-md bg-black/5 object-contain"
+                />
+              ),
+            )}
+          </div>
+        )}
+
+        {docs.length > 0 && (
+          <div className="mt-3 space-y-1">
+            {docs.map((d) => (
+              <div key={d.id} className="rounded-md bg-black/10 px-3 py-2 text-xs">
+                📄 {d.name} <span className="opacity-70">· {d.sizeKb} KB</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+// ---------- Drafts quick manager (memoized) ----------
+const DraftsManager = memo(function DraftsManager({
+  drafts,
+  activeId,
+  deleting,
+  onEdit,
+  onDelete,
+}: {
+  drafts: Post[];
+  activeId: string | null;
+  deleting: boolean;
+  onEdit: (d: Post) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="mt-6 glass-card p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary ring-1 ring-primary/25">
+          Drafts Quick Manager
+        </h2>
+        <span className="text-xs text-muted-foreground">{drafts.length}</span>
+      </div>
+      {drafts.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No drafts yet.</p>
+      ) : (
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {drafts.map((d) => (
+            <li
+              key={d.id}
+              className={`flex items-start gap-2 rounded-xl border p-2 text-xs transition-colors ${
+                activeId === d.id
+                  ? "border-primary/60 bg-primary/10"
+                  : "border-border hover:border-primary/40 hover:bg-secondary/60"
+              }`}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="line-clamp-2 text-foreground">{d.content || "(empty)"}</div>
+                <div className="mt-1 text-[10px] text-muted-foreground">
+                  {new Date(d.updated_at).toLocaleString()}
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-col gap-1">
+                <button
+                  onClick={() => onEdit(d)}
+                  title="Edit draft"
+                  className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => onDelete(d.id)}
+                  disabled={deleting}
+                  title="Delete draft"
+                  className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:border-destructive/50 hover:text-destructive disabled:opacity-40"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+});
+
+
 // ---------- AI Writer Sidebar ----------
 const AiWriterSidebar = memo(function AiWriterSidebar({
   onUseText,
