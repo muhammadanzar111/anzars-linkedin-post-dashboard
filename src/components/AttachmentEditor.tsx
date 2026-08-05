@@ -901,8 +901,10 @@ export function AttachmentEditor({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
+
 }
 
 function EmptyState({ onPick }: { onPick: () => void }) {
