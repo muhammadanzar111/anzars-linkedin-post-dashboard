@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
 import {
   X,
   Pencil,
@@ -417,9 +419,10 @@ export function AttachmentEditor({
   const canvasH = canvasRef.current?.height ?? 1;
   const pct = (v: number, total: number) => `${(v / total) * 100}%`;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="my-auto flex h-[85vh] max-h-[90vh] w-full max-w-5xl animate-fade-in-up flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 text-neutral-100 shadow-2xl">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex h-screen w-screen items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+      <div className="relative mx-auto my-auto flex h-[85vh] max-h-[700px] w-full max-w-4xl animate-fade-in-up flex-col overflow-hidden rounded-xl border border-neutral-800 bg-slate-900 text-neutral-100 shadow-2xl">
+
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between border-b border-neutral-800 px-5 py-3">
           <h3 className="text-base font-semibold">Editor</h3>
@@ -901,8 +904,10 @@ export function AttachmentEditor({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
+
 }
 
 function EmptyState({ onPick }: { onPick: () => void }) {
