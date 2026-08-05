@@ -8,14 +8,14 @@ export const COLOR_THEMES: {
   dark: boolean;
   swatch: string;
 }[] = [
+  { id: "light", label: "Clean Light", dark: false, swatch: "linear-gradient(135deg,#ffffff,#c7d2fe)" },
   { id: "midnight", label: "Midnight Dark", dark: true, swatch: "linear-gradient(135deg,#020617,#4f46e5)" },
   { id: "slate", label: "Slate", dark: true, swatch: "linear-gradient(135deg,#1e293b,#64748b)" },
   { id: "indigo", label: "Indigo Purple", dark: true, swatch: "linear-gradient(135deg,#1e1b4b,#a855f7)" },
-  { id: "light", label: "Clean Light", dark: false, swatch: "linear-gradient(135deg,#ffffff,#c7d2fe)" },
 ];
 
 const STORAGE_KEY = "studio-color-theme";
-const DEFAULT_THEME: ColorTheme = "midnight";
+const DEFAULT_THEME: ColorTheme = "light";
 
 function applyTheme(theme: ColorTheme) {
   if (typeof document === "undefined") return;
