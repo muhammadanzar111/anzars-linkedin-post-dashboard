@@ -88,10 +88,14 @@ function Dashboard() {
       <header className="relative border-b border-border bg-card/70">
 
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-foreground">LN Post Studio</h1>
-            <p className="text-xs text-muted-foreground">Draft • Publish • Track</p>
+          <div className="flex items-center gap-3">
+            <img src={lpsLogo.url} alt="LN Post Studio logo" className="h-7 w-7 object-contain" />
+            <div className="flex flex-col justify-center leading-tight">
+              <h1 className="text-lg font-bold tracking-tight text-foreground">LN Post Studio</h1>
+              <p className="text-xs text-muted-foreground">Draft • Publish • Track</p>
+            </div>
           </div>
+
           <div className="flex items-center gap-3">
             <ThemePicker theme={colorTheme} onChange={setColorTheme} />
             <button
