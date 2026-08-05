@@ -273,3 +273,12 @@
     transform: translateY(0);
   }
 }
+
+@keyframes splash-app-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

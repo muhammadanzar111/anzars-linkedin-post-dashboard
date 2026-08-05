@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { SplashScreen } from "@/components/SplashScreen";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -125,7 +126,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <SplashScreen />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <div className="animate-[splash-text_500ms_ease-out_1200ms_both]">
+      <div className="animate-[splash-app-in_500ms_ease-out_1200ms_both]">
         <Outlet />
       </div>
     </QueryClientProvider>
