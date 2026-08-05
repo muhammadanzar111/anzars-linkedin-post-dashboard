@@ -123,8 +123,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <SplashScreen />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="animate-[splash-text_500ms_ease-out_1200ms_both]">
+        <Outlet />
+      </div>
     </QueryClientProvider>
   );
 }
+
