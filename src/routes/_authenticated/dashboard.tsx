@@ -984,12 +984,14 @@ function AnalyticsTab() {
     return (
       <div className="space-y-4">
         <div className="flex justify-end">{syncButton}</div>
+        {syncMsg && <p className="text-xs text-muted-foreground">{syncMsg}</p>}
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           Publish a post to start seeing analytics here.
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="space-y-6">
