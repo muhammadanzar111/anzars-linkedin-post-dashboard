@@ -872,8 +872,36 @@ function NumberField({
 }
 
 // ---------- Analytics ----------
+const num = (v: unknown) => {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+};
+
+type MetricRow = Record<string, unknown>;
+
+function metricsOf(p: MetricRow) {
+  const impressions = num(p["impressions"] ?? p["views"]);
+  const likes = num(p["likes"]);
+  const comments = num(p["comments"]);
+  const reposts = num(p["reposts"] ?? p["shares"]);
+  return { impressions, likes, comments, reposts, engagement: likes + comments + reposts };
+}
+
 function AnalyticsTab() {
   const { data: posts } = useSuspenseQuery(postsQuery());
+  const qc = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      await qc.invalidateQueries({ queryKey: ["posts"] });
+      await qc.refetchQueries({ queryKey: ["posts"] });
+    } finally {
+      setSyncing(false);
+    }
+  }, [qc]);
+
   const published = useMemo(
     () =>
       posts
@@ -886,54 +914,78 @@ function AnalyticsTab() {
     [posts],
   );
 
-  const totals = useMemo(() => {
-    return published.reduce(
-      (acc, p) => {
-        acc.impressions += p.impressions;
-        acc.likes += p.likes;
-        acc.comments += p.comments;
-        acc.reposts += p.reposts;
-        return acc;
-      },
-      { impressions: 0, likes: 0, comments: 0, reposts: 0 },
-    );
-  }, [published]);
+  const rows = useMemo(
+    () =>
+      published.map((p, i) => ({
+        post: p,
+        m: metricsOf(p as unknown as MetricRow),
+        label: p.published_at
+          ? new Date(p.published_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+          : `#${i + 1}`,
+      })),
+    [published],
+  );
 
-  const engagementRate =
-    totals.impressions > 0
-      ? ((totals.likes + totals.comments + totals.reposts) / totals.impressions) * 100
-      : 0;
+  const totals = useMemo(
+    () =>
+      rows.reduce(
+        (acc, { m }) => ({
+          impressions: acc.impressions + m.impressions,
+          likes: acc.likes + m.likes,
+          comments: acc.comments + m.comments,
+          reposts: acc.reposts + m.reposts,
+          engagement: acc.engagement + m.engagement,
+        }),
+        { impressions: 0, likes: 0, comments: 0, reposts: 0, engagement: 0 },
+      ),
+    [rows],
+  );
 
-  const chartData = published.map((p, i) => ({
-    label:
-      p.published_at
-        ? new Date(p.published_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })
-        : `#${i + 1}`,
-    impressions: p.impressions,
-    engagement: p.likes + p.comments + p.reposts,
-  }));
+  const engagementRate = totals.impressions > 0 ? (totals.engagement / totals.impressions) * 100 : 0;
 
-  const top = [...published]
-    .sort((a, b) => b.likes + b.comments + b.reposts - (a.likes + a.comments + a.reposts))
-    .slice(0, 5);
+  const chartData = useMemo(
+    () => rows.map((r) => ({ label: r.label, impressions: r.m.impressions, engagement: r.m.engagement })),
+    [rows],
+  );
+
+  const top = useMemo(() => [...rows].sort((a, b) => b.m.engagement - a.m.engagement).slice(0, 5), [rows]);
+
+  const syncButton = (
+    <button
+      onClick={handleSync}
+      disabled={syncing}
+      className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent disabled:opacity-60"
+    >
+      {syncing ? "Syncing…" : "Sync Metrics"}
+    </button>
+  );
 
   if (published.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-        Publish a post to start seeing analytics here.
+      <div className="space-y-4">
+        <div className="flex justify-end">{syncButton}</div>
+        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+          Publish a post to start seeing analytics here.
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-medium">Analytics overview</h2>
+        {syncButton}
+      </div>
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatCard label="Posts" value={published.length} />
         <StatCard label="Impressions" value={totals.impressions} />
         <StatCard label="Likes" value={totals.likes} />
-        <StatCard label="Comments" value={totals.comments} />
+        <StatCard label="Total engagement" value={totals.engagement} />
         <StatCard label="Engagement rate" value={`${engagementRate.toFixed(2)}%`} />
       </div>
+
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard title="Impressions over time">
@@ -977,24 +1029,26 @@ function AnalyticsTab() {
       <div className="glass-card p-5">
         <h3 className="mb-3 text-sm font-medium">Top posts by engagement</h3>
         <ol className="space-y-3">
-          {top.map((p, i) => {
-            const eng = p.likes + p.comments + p.reposts;
+          {top.map(({ post: p, m }, i) => {
             return (
               <li key={p.id} className="flex gap-4 border-b border-border pb-3 last:border-b-0 last:pb-0">
                 <div className="text-lg font-semibold text-muted-foreground tabular-nums">{i + 1}</div>
                 <div className="flex-1">
                   <div className="line-clamp-2 text-sm">{p.content}</div>
                   <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground tabular-nums">
-                    <span>👁 {p.impressions.toLocaleString()}</span>
-                    <span>♥ {p.likes.toLocaleString()}</span>
-                    <span>💬 {p.comments.toLocaleString()}</span>
-                    <span>↻ {p.reposts.toLocaleString()}</span>
-                    <span className="font-medium text-foreground">Total engagement: {eng.toLocaleString()}</span>
+                    <span>👁 {m.impressions.toLocaleString()}</span>
+                    <span>♥ {m.likes.toLocaleString()}</span>
+                    <span>💬 {m.comments.toLocaleString()}</span>
+                    <span>↻ {m.reposts.toLocaleString()}</span>
+                    <span className="font-medium text-foreground">
+                      Total engagement: {m.engagement.toLocaleString()}
+                    </span>
                   </div>
                 </div>
               </li>
             );
           })}
+
         </ol>
       </div>
     </div>
