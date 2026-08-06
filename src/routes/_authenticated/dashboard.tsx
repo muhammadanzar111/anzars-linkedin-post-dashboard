@@ -1069,7 +1069,9 @@ function AnalyticsTab() {
                       Total engagement: {m.engagement.toLocaleString()}
                     </span>
                   </div>
+                  <MetricsEditor post={p} label="Update Metrics" />
                 </div>
+
               </li>
             );
           })}
