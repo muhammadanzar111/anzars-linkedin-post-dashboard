@@ -17,6 +17,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { listPosts, saveDraft, deletePost, updateMetrics } from "@/lib/posts.functions";
 import { publishLinkedInPost } from "@/lib/linkedin.functions";
+import { syncLinkedInMetrics } from "@/lib/metrics-sync.functions";
+
 import { generateLinkedInPost } from "@/lib/ai-writer.functions";
 import type { Tables } from "@/integrations/supabase/types";
 import { ThemeBackdrop, ThemePicker, useColorTheme } from "@/components/ThemeSwitcher";
@@ -765,7 +767,7 @@ function MetricStat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function MetricsEditor({ post }: { post: Post }) {
+function MetricsEditor({ post, label }: { post: Post; label?: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [impressions, setImpressions] = useState(String(post.impressions));
@@ -799,10 +801,11 @@ function MetricsEditor({ post }: { post: Post }) {
         onClick={() => setOpen(true)}
         className="mt-3 text-xs text-muted-foreground underline-offset-4 hover:underline"
       >
-        Update metrics from LinkedIn →
+        {label ?? "Update metrics from LinkedIn"} →
       </button>
     );
   }
+
 
   return (
     <div className="mt-4 space-y-3 rounded-md border border-border bg-background p-3">
@@ -891,16 +894,33 @@ function AnalyticsTab() {
   const { data: posts } = useSuspenseQuery(postsQuery());
   const qc = useQueryClient();
   const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const syncFn = useServerFn(syncLinkedInMetrics);
 
   const handleSync = useCallback(async () => {
     setSyncing(true);
+    setSyncMsg(null);
     try {
+      const res = await syncFn({});
       await qc.invalidateQueries({ queryKey: ["posts"] });
       await qc.refetchQueries({ queryKey: ["posts"] });
+      if (res.updated > 0) {
+        setSyncMsg(`Synced live metrics for ${res.updated} post${res.updated === 1 ? "" : "s"}.`);
+      } else if (res.failed > 0) {
+        setSyncMsg(
+          "LinkedIn didn't return statistics for these posts (personal profiles only grant publish access). Use “Update Metrics” on a post to enter the numbers manually.",
+        );
+      } else {
+        setSyncMsg("Nothing to sync yet.");
+      }
+    } catch (e) {
+      await qc.refetchQueries({ queryKey: ["posts"] });
+      setSyncMsg(e instanceof Error ? e.message : "Sync failed");
     } finally {
       setSyncing(false);
     }
-  }, [qc]);
+  }, [qc, syncFn]);
+
 
   const published = useMemo(
     () =>
@@ -964,6 +984,7 @@ function AnalyticsTab() {
     return (
       <div className="space-y-4">
         <div className="flex justify-end">{syncButton}</div>
+        {syncMsg && <p className="text-xs text-muted-foreground">{syncMsg}</p>}
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           Publish a post to start seeing analytics here.
         </div>
@@ -971,12 +992,19 @@ function AnalyticsTab() {
     );
   }
 
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-medium">Analytics overview</h2>
         {syncButton}
       </div>
+      {syncMsg && (
+        <p className="rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
+          {syncMsg}
+        </p>
+      )}
+
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatCard label="Posts" value={published.length} />
@@ -1044,7 +1072,9 @@ function AnalyticsTab() {
                       Total engagement: {m.engagement.toLocaleString()}
                     </span>
                   </div>
+                  <MetricsEditor post={p} label="Update Metrics" />
                 </div>
+
               </li>
             );
           })}
