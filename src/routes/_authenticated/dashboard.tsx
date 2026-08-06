@@ -767,7 +767,7 @@ function MetricStat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function MetricsEditor({ post }: { post: Post }) {
+function MetricsEditor({ post, label }: { post: Post; label?: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [impressions, setImpressions] = useState(String(post.impressions));
