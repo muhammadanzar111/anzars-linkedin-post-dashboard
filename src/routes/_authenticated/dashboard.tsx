@@ -801,10 +801,11 @@ function MetricsEditor({ post, label }: { post: Post; label?: string }) {
         onClick={() => setOpen(true)}
         className="mt-3 text-xs text-muted-foreground underline-offset-4 hover:underline"
       >
-        Update metrics from LinkedIn →
+        {label ?? "Update metrics from LinkedIn"} →
       </button>
     );
   }
+
 
   return (
     <div className="mt-4 space-y-3 rounded-md border border-border bg-background p-3">
