@@ -996,6 +996,12 @@ function AnalyticsTab() {
         <h2 className="text-sm font-medium">Analytics overview</h2>
         {syncButton}
       </div>
+      {syncMsg && (
+        <p className="rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
+          {syncMsg}
+        </p>
+      )}
+
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatCard label="Posts" value={published.length} />
