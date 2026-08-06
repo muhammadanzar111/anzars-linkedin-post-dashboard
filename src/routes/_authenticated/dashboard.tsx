@@ -891,16 +891,33 @@ function AnalyticsTab() {
   const { data: posts } = useSuspenseQuery(postsQuery());
   const qc = useQueryClient();
   const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const syncFn = useServerFn(syncLinkedInMetrics);
 
   const handleSync = useCallback(async () => {
     setSyncing(true);
+    setSyncMsg(null);
     try {
+      const res = await syncFn({});
       await qc.invalidateQueries({ queryKey: ["posts"] });
       await qc.refetchQueries({ queryKey: ["posts"] });
+      if (res.updated > 0) {
+        setSyncMsg(`Synced live metrics for ${res.updated} post${res.updated === 1 ? "" : "s"}.`);
+      } else if (res.failed > 0) {
+        setSyncMsg(
+          "LinkedIn didn't return statistics for these posts (personal profiles only grant publish access). Use “Update Metrics” on a post to enter the numbers manually.",
+        );
+      } else {
+        setSyncMsg("Nothing to sync yet.");
+      }
+    } catch (e) {
+      await qc.refetchQueries({ queryKey: ["posts"] });
+      setSyncMsg(e instanceof Error ? e.message : "Sync failed");
     } finally {
       setSyncing(false);
     }
-  }, [qc]);
+  }, [qc, syncFn]);
+
 
   const published = useMemo(
     () =>
