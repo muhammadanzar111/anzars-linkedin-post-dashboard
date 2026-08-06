@@ -1029,24 +1029,26 @@ function AnalyticsTab() {
       <div className="glass-card p-5">
         <h3 className="mb-3 text-sm font-medium">Top posts by engagement</h3>
         <ol className="space-y-3">
-          {top.map((p, i) => {
-            const eng = p.likes + p.comments + p.reposts;
+          {top.map(({ post: p, m }, i) => {
             return (
               <li key={p.id} className="flex gap-4 border-b border-border pb-3 last:border-b-0 last:pb-0">
                 <div className="text-lg font-semibold text-muted-foreground tabular-nums">{i + 1}</div>
                 <div className="flex-1">
                   <div className="line-clamp-2 text-sm">{p.content}</div>
                   <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground tabular-nums">
-                    <span>👁 {p.impressions.toLocaleString()}</span>
-                    <span>♥ {p.likes.toLocaleString()}</span>
-                    <span>💬 {p.comments.toLocaleString()}</span>
-                    <span>↻ {p.reposts.toLocaleString()}</span>
-                    <span className="font-medium text-foreground">Total engagement: {eng.toLocaleString()}</span>
+                    <span>👁 {m.impressions.toLocaleString()}</span>
+                    <span>♥ {m.likes.toLocaleString()}</span>
+                    <span>💬 {m.comments.toLocaleString()}</span>
+                    <span>↻ {m.reposts.toLocaleString()}</span>
+                    <span className="font-medium text-foreground">
+                      Total engagement: {m.engagement.toLocaleString()}
+                    </span>
                   </div>
                 </div>
               </li>
             );
           })}
+
         </ol>
       </div>
     </div>
