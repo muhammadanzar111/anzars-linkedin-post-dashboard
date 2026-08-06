@@ -17,6 +17,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { listPosts, saveDraft, deletePost, updateMetrics } from "@/lib/posts.functions";
 import { publishLinkedInPost } from "@/lib/linkedin.functions";
+import { syncLinkedInMetrics } from "@/lib/metrics-sync.functions";
+
 import { generateLinkedInPost } from "@/lib/ai-writer.functions";
 import type { Tables } from "@/integrations/supabase/types";
 import { ThemeBackdrop, ThemePicker, useColorTheme } from "@/components/ThemeSwitcher";
